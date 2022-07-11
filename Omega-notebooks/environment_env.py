@@ -510,7 +510,7 @@ class Env(ABC):
 
         done_jobs = np.where(vfunc(self.jobqueue))
 
-        print('done jobs: ',done_jobs)
+        # print('done jobs: ',done_jobs)
         # print('done jobs len: ',len(done_jobs))
 
 
