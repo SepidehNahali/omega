@@ -123,6 +123,7 @@ class Env(ABC):
 
         self.jobqueue_maxlen = pa.jobqueue_maxlen
         self.j_id = 0
+        self.last_job_id = 0
         self.total_step = 0
         self.num_job_finished = 0
 
@@ -373,11 +374,15 @@ class Env(ABC):
         """
         if all(x == -1 for x in self.resources[gpus]):
             self.resources[gpus] = self.jobqueue[j_idx].job_id
-            # print('self.resources : ',self.resources)
+            # print('job ',self.jobqueue[j_idx].job_id,' Just assigend  cordination: ',gpus )
+
             # print('Job id: ',j_idx)
             self.jobqueue[j_idx].status = 'running'
             self.jobqueue[j_idx].gpus = gpus
-            print('job ',j_idx,' Just assigend  cordination: ',gpus )
+            # print('self.resources : ',self.resources)
+            # for ii in range(len(self.jobqueue)):
+            #     print('Job Queue: ',self.jobqueue[ii].job_id)
+
             return True
         return False
 
@@ -408,7 +413,9 @@ class Env(ABC):
                 return self.get_first_k_gpus(gpu_request)
 
             else:
-                print('2- random_select_k_gpus_for_job: ',j ,len(self.jobqueue),avl_gpus[0],len(avl_gpus[0]))
+                # print('2- random_select_k_gpus_for_job: ',j ,len(self.jobqueue),avl_gpus[0],len(avl_gpus[0]))
+                # print('self.resources ',self.resources)
+
                 # return ([], [], [], [], [])
                 return ([], [], [])
 
@@ -495,13 +502,21 @@ class Env(ABC):
 
         def getter(j):
             # print('total computational distance of the job: ',j.job_id,' is equal to: ', j.d_f)
-
+            # print('and','j.d_done is: ',j.d_done )
             return j.d_done >= j.d_f
 
         vfunc = np.vectorize(getter, otypes=[bool])
+        # print('done jobs vfunc: ',vfunc )
+
         done_jobs = np.where(vfunc(self.jobqueue))
 
-        print('done jobs: ',done_jobs )
+        print('done jobs: ',done_jobs)
+        # print('done jobs len: ',len(done_jobs))
+
+
+        # print('done_jobs[0],done_jobs[1],done_jobs[2] : ',done_jobs[0],done_jobs[1],done_jobs[2])
+
+
         return done_jobs
 
 
