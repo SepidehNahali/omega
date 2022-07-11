@@ -26,8 +26,8 @@ else:  # tf是channels_last
 x_train /= 255
 x_test /=255
 
-y_train = keras.utils.np_utils.to_categorical(y_train, 10)
-y_test = keras.utils.np_utils.to_categorical(y_test, 10)
+y_train = keras.utils.to_categorical(y_train, 10)
+y_test = keras.utils.to_categorical(y_test, 10)
 # print(y_train.shape)
 # print(y_test.shape)
 # exit(1)
