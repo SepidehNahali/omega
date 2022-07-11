@@ -120,7 +120,6 @@ __all__ = ['DQNTesting1']
 class DQNTesting1(Env):
     def __init__(self, pa):
         super().__init__(pa)
-
     def step(self, action):
         ''' Step function for nonpreemptive dqn case
 
@@ -129,25 +128,29 @@ class DQNTesting1(Env):
         action: int
             The index of the job in the jobqueue
         '''
-        done_jobs = self.get_done_jobs()
-        self.remove_jobs(done_jobs)
-        self.advance_runningjobs_onestep()
-
+        allocate = False
         j = action
         if j < len(self.jobqueue) and len(self.jobqueue) > 0:
             selected_gpu = self.random_select_k_gpus_for_job(j)
-            if all(x == -1 for x in self.resources[selected_gpu]) and self.jobqueue[j].status == 'waiting':
+            if all(x == -1 for x in self.resources[selected_gpu]) and self.jobqueue[j].status == 'waiting' and len(selected_gpu[0]) > 0:
                 self.assign_job_gpus(j, selected_gpu)
-        if random.random() < self.pa.new_job_rate:
-                # (self.num_job_finished + len(self.jobqueue) + len(self.backlog)) < self.pa.target_num_job_arrive:
-            self.insert_new_job()
+                job = self.jobqueue[j]
+                allocate = True
+        if not allocate:
+            if np.random.random() < self.pa.new_job_rate:
+                self.insert_new_job()
+
         if self.num_job_finished >= self.pa.target_num_job_arrive:
             self.done = True
         # print(f'{self.num_job_finished} {len(self.jobqueue)} {len(self.backlog)}')
         self.total_step += 1
         self.episode_reward = np.append(self.episode_reward, self.reward())
-        return self.observe(), self.reward(), self.done
+        done_jobs = self.get_done_jobs()
 
+        self.remove_jobs(done_jobs)
+
+        self.advance_runningjobs_onestep()
+        return self.observe(), self.reward(), self.done
 
     def observe(self):
         # print('self.resources: ',self.resources)
