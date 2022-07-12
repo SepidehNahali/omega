@@ -40,7 +40,7 @@ def exp1(name):
                     delay_penalty=delay_penalty,
                     dismiss_penalty=dismiss_penalty,
                     target_num_job_done=target_num_job_done,
-                    max_num_timesteps= 60000)
+                    max_num_timesteps= 90000)
 
     BATCH_SIZE = 32
     REPLAY_BUFFER_SIZE = 30000
