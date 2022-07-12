@@ -654,59 +654,6 @@ class Env(ABC):
             if len(j.gpus[0]) != j.gpu_request:
                 reward += penalty_assigned_gpus(job=j, gpus_per_rack=self.gpus_per_rack, ret_reducer=self.pa.ret_reducer) * self.pa.delay_penalty
                 # print('reward += j.v_m',reward )
-            jobGpusIDlist = []
-            WIDTH = 2 #(machine per rack)
-            DEPTH = 4 #(gpu per machine)
-            HEIGHT = 4 
-
-            for cordin in range(len(j.gpus[0])):
-                # print('j.gpus[0]: ',j.gpus[0],'j.gpus[1]: ',j.gpus[1],'j.gpus[2]: ',j.gpus[2])
-                # print('len(j.gpus[0])',len(j.gpus[0]))
-                # print('cordin: ',cordin)
-                x_=j.gpus[0][cordin-1]
-                y_=j.gpus[1][cordin-1]
-                z_=j.gpus[2][cordin-1]
-                gpu_Id = x_ * HEIGHT * DEPTH + y_ * DEPTH + z_# get the first gpu number dims found randomly in(x,y,z)
-                # print('gpu_Id: ',gpu_Id)
-                # print('x_,y_,z_: ',x_,y_,z_)
-
-                jobGpusIDlist.append(gpu_Id)
-                # print('jobGpusIDlist: ',jobGpusIDlist)
-                
-                
-            # for gp in jobGpusIDlist:
-                # print('list of gpus of the job: ',gp)
-            if(len(jobGpusIDlist)>1):
-                # print('length of gpu array: ',len(gp))
-                nearest = topology_parameters.get_gpu_sort_nearest(jobGpusIDlist[0]) #containing the first node itself
-                a=jobGpusIDlist # we could use (==).all in if statement compariation for np array too
-                a.sort()
-                b=nearest[:len(jobGpusIDlist)].tolist()
-                b.sort() # index is because selecting first n of needed gpus from nearest gpus list
-                # topology_parameters.get_gpu_sort_nearest(gp[0])  
-                for i in range(len(jobGpusIDlist)):
-                    distancefromothers += topology_parameters.get_gpu_distance_gpu(jobGpusIDlist[0],jobGpusIDlist[i])
-
-                # distancefromothers = [topology_parameters.get_gpu_distance_gpu(jobGpusIDlist[i],jobGpusIDlist[j]) for i in range(len(jobGpusIDlist)) for j in range(i+1) if i!=j]
-                # distancefromothers = sum(distancefromothers)
-                    # print('a: ',a)
-                    # print('b: ',b)
-                    # print('distancefromothers: ',distancefromothers)
-                if distancefromothers == 0:
-                   distancefromothers+=0.1 # avoid infinity
-                   
-                opts= len(set(a) & set(b)) # number of matches
-                reward /= distancefromothers/opts
-                      
-
-
-
-                
-                
-                
-                
-                
-                
                 
         for j in self.jobqueue[self.get_waiting_jobs()]:
             reward += calc_job_minbatch_speed(job=j, gpus_per_rack=self.gpus_per_rack, ret_reducer=self.pa.ret_reducer, singleormulti='single') * self.pa.hold_penalty
