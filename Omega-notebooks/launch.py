@@ -10,21 +10,22 @@ from environment_simple_dqn_env import *
 from dqn_agent import *
 from train import *
 from utils_schedules import *
-
+from environment_env_util import *
+from env_components_topolgy import *
 
 
 def exp1(name):
     num_gpus_per_machine = 4
     num_machines_per_rack = 4
     num_racks_per_cluster = 2
-    max_gpu_request = 8
+    max_gpu_request = 4
     max_job_len = 20
     jobqueue_maxlen = 100
     max_backlog_len = 10
     new_job_rate = 0.6
-    target_num_job_done = 100
+    target_num_job_done = 1000
     delay_penalty = -1
-    hold_penalty = -2
+    hold_penalty = -1
     dismiss_penalty = -1
 
 
@@ -40,7 +41,7 @@ def exp1(name):
                     delay_penalty=delay_penalty,
                     dismiss_penalty=dismiss_penalty,
                     target_num_job_done=target_num_job_done,
-                    max_num_timesteps= 90000)
+                    max_num_timesteps=90000)
 
     BATCH_SIZE = 32
     REPLAY_BUFFER_SIZE = 30000
@@ -56,9 +57,31 @@ def exp1(name):
     NUM_EPOCH= 100
     NUM_EPISODE = 100
     env = DQNTesting1(pa)
-    print('env=',env)
     baselines = ['SJF', 'RANDOM']
+    
 
+
+    # topology_parameters=NetworkTopology(pa)
+    # topology_parameters.node_index_build()
+    # topology_parameters.create_graph()
+    # topology_parameters.create_adjacency_matrix()
+    # distancefromothers = 0
+    # jobGpusIDlist= [1,31,24]
+    # print(    topology_parameters.get_gpu_distance_from_all(1))
+
+    # for i in range(len(jobGpusIDlist)):
+    #     for j in range(i+1):
+    #       if(j<len(jobGpusIDlist)-1):
+    #         if(i!=j):
+    #           print(jobGpusIDlist[i],jobGpusIDlist[j],':',topology_parameters.get_gpu_distance_gpu(jobGpusIDlist[i],jobGpusIDlist[j]))
+    #           distancefromothers += topology_parameters.get_gpu_distance_gpu(jobGpusIDlist[i],jobGpusIDlist[j])
+    
+   
+    # print(distancefromothers)
+
+    # distancefromothers = [topology_parameters.get_gpu_distance_gpu(jobGpusIDlist[i],jobGpusIDlist[j]) for i in range(len(jobGpusIDlist)) for j in range(i+1) if i!=j]
+    
+    # print(sum(distancefromothers))
     def stopping_criterion(env, t):
         # notice that here t is the number of steps of the wrapped env,
         # which is different from the number of steps in the underlying env
@@ -87,6 +110,9 @@ def exp1(name):
         baselines=baselines
     )
 
+  
+
+    return None
 
 
     return None
@@ -114,10 +140,9 @@ parser.add_argument('-n',
 #         print("CUDA Device: %d" % torch.cuda.current_device())
 # if vars(args)['e'] == 1:
 # exp1(vars(args)['n'])
-exp1('ex2')
+exp1('FirstM')
 # print(env.resources)
 # train(env)
-
 
 
 # if __name__ == '__main__':
