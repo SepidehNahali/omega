@@ -164,31 +164,31 @@ def calc_job_minbatch_speed(job, gpus_per_rack, ret_reducer, singleormulti='mult
     HEIGHT = 4 
     distancefromothers = 0
     # print('job.gpus[0]): ',job.gpus)
-    if job.gpus!=[]:
-        for cordin in range(len(job.gpus[0])): # find the selected GPUs' IDs
-            x_=job.gpus[0][cordin-1]
-            y_=job.gpus[1][cordin-1]
-            z_=job.gpus[2][cordin-1]
-            gpu_Id = x_ * HEIGHT * DEPTH + y_ * DEPTH + z_# get the first gpu number dims found randomly in(x,y,z)
-            jobGpusIDlist.append(gpu_Id)
+    # if job.gpus!=[]:
+    #     for cordin in range(len(job.gpus[0])): # find the selected GPUs' IDs
+    #         x_=job.gpus[0][cordin-1]
+    #         y_=job.gpus[1][cordin-1]
+    #         z_=job.gpus[2][cordin-1]
+    #         gpu_Id = x_ * HEIGHT * DEPTH + y_ * DEPTH + z_# get the first gpu number dims found randomly in(x,y,z)
+    #         jobGpusIDlist.append(gpu_Id)
             
-        # for gp in jobGpusIDlist:
-        if(len(jobGpusIDlist)>1):
-            nearest = topology_parameters.get_gpu_sort_nearest(jobGpusIDlist[0]) #containing the first node itself
-            a=jobGpusIDlist # we could use (==).all in if statement compariation for np array too
-            a.sort()
-            b=nearest[:len(jobGpusIDlist)].tolist()
-            b.sort() # index is because selecting first n of needed gpus from nearest gpus list
-            # print(topology_parameters.get_gpu_distance_from_all(1))
+    #     # for gp in jobGpusIDlist:
+    #     if(len(jobGpusIDlist)>1):
+    #         nearest = topology_parameters.get_gpu_sort_nearest(jobGpusIDlist[0]) #containing the first node itself
+    #         a=jobGpusIDlist # we could use (==).all in if statement compariation for np array too
+    #         a.sort()
+    #         b=nearest[:len(jobGpusIDlist)].tolist()
+    #         b.sort() # index is because selecting first n of needed gpus from nearest gpus list
+    #         # print(topology_parameters.get_gpu_distance_from_all(1))
             
-            for i in range(len(jobGpusIDlist)):
-                      distancefromothers += topology_parameters.get_gpu_distance_gpu(jobGpusIDlist[i],jobGpusIDlist[0])
+    #         for i in range(len(jobGpusIDlist)):
+    #                   distancefromothers += topology_parameters.get_gpu_distance_gpu(jobGpusIDlist[i],jobGpusIDlist[0])
                       
-            # distancefromothers = [topology_parameters.get_gpu_distance_gpu(jobGpusIDlist[i],jobGpusIDlist[j]) for i in range(len(jobGpusIDlist)) for j in range(i+1) if i!=j]
+    #         # distancefromothers = [topology_parameters.get_gpu_distance_gpu(jobGpusIDlist[i],jobGpusIDlist[j]) for i in range(len(jobGpusIDlist)) for j in range(i+1) if i!=j]
 
                    
-            # switchtime = sum(distancefromothers)
-            switchtime = distancefromothers
+    #         # switchtime = sum(distancefromothers)
+    #         switchtime = distancefromothers
         ##############################################################################Add switch time between gpus
     if not outdetails:
         return minbatch_speed - switchtime
