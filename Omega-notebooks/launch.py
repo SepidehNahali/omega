@@ -18,11 +18,11 @@ def exp1(name):
     num_machines_per_rack = 4
     num_racks_per_cluster = 2
     max_gpu_request = 8
-    max_job_len = 20
-    jobqueue_maxlen = 10
+    max_job_len = 30
+    jobqueue_maxlen = 100
     max_backlog_len = 10
     new_job_rate = 0.6
-    target_num_job_done = 50
+    target_num_job_done = 1000
     delay_penalty = -1
     hold_penalty = -2
     dismiss_penalty = -1
