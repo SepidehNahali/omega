@@ -22,7 +22,7 @@ def exp1(name):
     jobqueue_maxlen = 100
     max_backlog_len = 10
     new_job_rate = 0.6
-    target_num_job_done = 1000
+    target_num_job_done = 100
     delay_penalty = -1
     hold_penalty = -2
     dismiss_penalty = -1
