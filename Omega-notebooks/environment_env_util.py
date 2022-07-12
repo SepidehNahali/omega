@@ -73,15 +73,53 @@ def calc_speed_single(gradsize, gpu_request, d_mj_tflop, tt_m, numracks, ret_red
     minbatch_speed *= gpu_request
     return rt_m, minbatch_speed
 
+def compute_GPU_distances(job):
+        ############################################################################## Add switch time between gpus
+    from env_components_topolgy import NetworkTopology
+    topology_parameters = NetworkTopology()
+    switchtime = 0
+    jobGpusIDlist = []
+    WIDTH = 2 #(machine per rack)
+    DEPTH = 4 #(gpu per machine)
+    HEIGHT = 4 
+    distancefromothers = 0
+    # print('job.gpus[0]): ',job.gpus)
+    if job.gpus!=[]:
+        for cordin in range(len(job.gpus[0])): # find the selected GPUs' IDs
+            x_=job.gpus[0][cordin-1]
+            y_=job.gpus[1][cordin-1]
+            z_=job.gpus[2][cordin-1]
+            gpu_Id = x_ * HEIGHT * DEPTH + y_ * DEPTH + z_# get the first gpu number dims found randomly in(x,y,z)
+            jobGpusIDlist.append(gpu_Id)
+            
+        # for gp in jobGpusIDlist:
+        if(len(jobGpusIDlist)>1):
+            nearest = topology_parameters.get_gpu_sort_nearest(jobGpusIDlist[0]) #containing the first node itself
+            a=jobGpusIDlist # we could use (==).all in if statement compariation for np array too
+            a.sort()
+            b=nearest[:len(jobGpusIDlist)].tolist()
+            b.sort() # index is because selecting first n of needed gpus from nearest gpus list
+            # print(topology_parameters.get_gpu_distance_from_all(1))
+            
+            for i in range(len(jobGpusIDlist)):
+                      distancefromothers += topology_parameters.get_gpu_distance_gpu(jobGpusIDlist[i],jobGpusIDlist[0])
+                      
+            # distancefromothers = [topology_parameters.get_gpu_distance_gpu(jobGpusIDlist[i],jobGpusIDlist[j]) for i in range(len(jobGpusIDlist)) for j in range(i+1) if i!=j]
 
-def calc_speed_multi(gradsize, g_assigned, d_m, tt_m, numracks,
+                   
+            # switchtime = sum(distancefromothers)
+        #############################################################################Add switch time between gpus
+        return distancefromothers
+
+
+def calc_speed_multi(job,gradsize, g_assigned, d_m, tt_m, numracks,
                      scale, ret_reducer=1.):
     # job.scale is computed when env.findlimitingbws() is called.
     assert ~np.isnan(scale)
     rt_m = get_ret_asym(
         gradsize, g_assigned, numracks, ret_reducer)
     # Todo-cbb. Add in reduction time increaser for number of racks.
-    minbatch_speed = d_m * 1.0 / (tt_m + 1.0 * scale * rt_m)
+    minbatch_speed = d_m * 1.0 / (tt_m + 1.0 * scale * rt_m+compute_GPU_distances(job))
     minbatch_speed *= g_assigned
     return rt_m, minbatch_speed
 
@@ -144,7 +182,7 @@ def calc_job_minbatch_speed(job, gpus_per_rack, ret_reducer, singleormulti='mult
     elif singleormulti == 'multi':  # actual speed
         # job.scale is computed when env.findlimitingbws() is called.
         assert ~np.isnan(job.scale)
-        rt_m, minbatch_speed = calc_speed_multi(
+        rt_m, minbatch_speed = calc_speed_multi(job,
             job.gradsize, len(job.gpus[0]), job.d_m, job.tt_m, numracks, job.scale,
             ret_reducer)
         job.rt_m = rt_m
@@ -154,46 +192,10 @@ def calc_job_minbatch_speed(job, gpus_per_rack, ret_reducer, singleormulti='mult
     assert ~np.isnan(minbatch_speed)
     
     
-            ############################################################################## Add switch time between gpus
-    from env_components_topolgy import NetworkTopology
-    topology_parameters = NetworkTopology()
-    switchtime = 0
-    jobGpusIDlist = []
-    WIDTH = 2 #(machine per rack)
-    DEPTH = 4 #(gpu per machine)
-    HEIGHT = 4 
-    distancefromothers = 0
-    # print('job.gpus[0]): ',job.gpus)
-    # if job.gpus!=[]:
-    #     for cordin in range(len(job.gpus[0])): # find the selected GPUs' IDs
-    #         x_=job.gpus[0][cordin-1]
-    #         y_=job.gpus[1][cordin-1]
-    #         z_=job.gpus[2][cordin-1]
-    #         gpu_Id = x_ * HEIGHT * DEPTH + y_ * DEPTH + z_# get the first gpu number dims found randomly in(x,y,z)
-    #         jobGpusIDlist.append(gpu_Id)
-            
-    #     # for gp in jobGpusIDlist:
-    #     if(len(jobGpusIDlist)>1):
-    #         nearest = topology_parameters.get_gpu_sort_nearest(jobGpusIDlist[0]) #containing the first node itself
-    #         a=jobGpusIDlist # we could use (==).all in if statement compariation for np array too
-    #         a.sort()
-    #         b=nearest[:len(jobGpusIDlist)].tolist()
-    #         b.sort() # index is because selecting first n of needed gpus from nearest gpus list
-    #         # print(topology_parameters.get_gpu_distance_from_all(1))
-            
-    #         for i in range(len(jobGpusIDlist)):
-    #                   distancefromothers += topology_parameters.get_gpu_distance_gpu(jobGpusIDlist[i],jobGpusIDlist[0])
-                      
-    #         # distancefromothers = [topology_parameters.get_gpu_distance_gpu(jobGpusIDlist[i],jobGpusIDlist[j]) for i in range(len(jobGpusIDlist)) for j in range(i+1) if i!=j]
-
-                   
-    #         # switchtime = sum(distancefromothers)
-    #         switchtime = distancefromothers
-        ##############################################################################Add switch time between gpus
     if not outdetails:
-        return minbatch_speed - switchtime
+        return minbatch_speed 
     else:
-        return minbatch_speed- switchtime , rt_m
+        return minbatch_speed , rt_m
 
 
 def penalty_assigned_gpus(job, gpus_per_rack, ret_reducer):
@@ -209,7 +211,7 @@ def penalty_assigned_gpus(job, gpus_per_rack, ret_reducer):
         numracks = num_racks_cal(job.gpu_request, gpus_per_rack)
     else:
         numracks = num_racks_assigned_cal(job.gpus)
-    _, minbatch_speed = calc_speed_multi(
+    _, minbatch_speed = calc_speed_multi(job,
         job.gradsize, gpu_wrong, job.d_m, job.tt_m, numracks, job.scale,
         ret_reducer)
     # rt_m, minbatch_speed = calc_speed_multi(
