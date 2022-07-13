@@ -659,9 +659,27 @@ class Env(ABC):
 
         # for j in self.backlog:
         #     reward += calc_job_minbatch_speed(job=j, gpus_per_rack=self.gpus_per_rack, ret_reducer=self.pa.ret_reducer, singleormulti='single') * self.pa.dismiss_penalty
+
+
+  
+        for j in self.jobqueue[self.get_running_jobs()]:
+            # print('im in reward loop, running job is: ',j.job_id)
+            for gp in j.gpus:
+                # print('list of gpus of the job: ',gp)
+                if(len(gp)>1):
+                    # print('length of gpu array: ',len(gp))
+                    nearest = topology_parameters.get_gpu_sort_nearest(gp[0]) #containing the first node itself
+                    a=gp.tolist() # we could use (==).all in if statement compariation for np array too
+                    a.sort()
+                    b=nearest[:len(gp)].tolist()
+                    b.sort() # index is because selecting first n of needed gpus from nearest gpus list
+                    if(a==b): # sort nearest gpus to the first gpu and selected gpus to compare if they are optimal
+                       reward += 100*len(gp)
+                    else:
+                       topology_parameters.get_gpu_sort_nearest(gp[0])
+                       for i in gp:
+                            distancefromothers += topology_parameters.get_gpu_distance_gpu(gp[0],i)
+                       reward += -100*distancefromothers
         reward = np.clip(reward, -300, 100)
         return reward
-
-
-
 
