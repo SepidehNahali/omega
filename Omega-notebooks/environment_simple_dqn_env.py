@@ -115,11 +115,14 @@ import numpy as np
 #         done_jobs = np.where(vfunc(self.jobqueue))
 #         return done_jobs
 
+
+
 __all__ = ['DQNTesting1']
 
 class DQNTesting1(Env):
     def __init__(self, pa):
         super().__init__(pa)
+
     def step(self, action):
         ''' Step function for nonpreemptive dqn case
 
@@ -152,26 +155,28 @@ class DQNTesting1(Env):
         self.advance_runningjobs_onestep()
         return self.observe(), self.reward(), self.done
 
+
     def observe(self):
-        # print('self.resources: ',self.resources)
         height = self.pa.max_job_len
-        # width = self.jobqueue_maxlen * (self.pa.max_gpu_request)
-        width = self.resources.size + self.jobqueue_maxlen * self.pa.max_gpu_request
-        image = np.zeros((height, width))
-        image[:, 0: self.resources.size] = self.get_cluster_canvas()[:, :]
-        pt = self.resources.size
+        width = self.jobqueue_maxlen * (self.pa.max_gpu_request)
+        #width = self.resources.size + self.jobqueue_maxlen * self.pa.max_gpu_request
+        image = np.zeros((2, height, width))
+        #image[:, 0: self.resources.size] = self.get_cluster_canvas()[:, :]
+        #pt = self.resources.size
+        pt = 0
         for j in self.jobqueue:
             if j.status == 'waiting':
-                image[: j.job_len, pt: pt + j.gpu_request] = 1
+                image[0, : j.job_len, pt: pt + j.gpu_request] = j.m
+                image[1, : j.job_len, pt: pt + j.gpu_request] = j.waiting_time
             pt += self.pa.max_gpu_request
 
-        return np.expand_dims(image, axis=2)
+        # return np.expand_dims(image, axis=2)
+        return image
 
     def get_cluster_canvas(self):
         image = np.zeros((self.pa.max_job_len, self.resources.size))
         gpus = self.resources.reshape(1, self.resources.size)
         used = np.where(gpus != -1)
-        # print(' Used GPUs index ',        used )
         for i, j in zip(used[0], used[1]):
             # print(f'{get_j_idx_by_id(gpus[i,j], jobqueue)} {gpus[i,j]}')
             j_idx = self.get_j_idx_by_id(gpus[i, j])[0][0]
@@ -193,4 +198,31 @@ class DQNTesting1(Env):
 
 
     def reward(self):
+        # return self.reward_throughput()
         return self.reward_throughput()
+
+    def testing_reward(self):
+        reward = 0
+        for j in self.jobqueue[self.get_running_jobs()]:
+            reward += 1
+        for j in self.jobqueue[self.get_waiting_jobs()]:
+            reward -= 1
+
+        return reward
+
+    def get_done_jobs_test(self):
+        """Get the index of finished jobs
+
+        Returns
+        -------
+        done_jobs :
+            Thie index of finished jobs
+        """
+
+        def getter(j):
+
+            return j.progress >= j.job_len
+
+        vfunc = np.vectorize(getter, otypes=[bool])
+        done_jobs = np.where(vfunc(self.jobqueue))
+        return done_jobs
