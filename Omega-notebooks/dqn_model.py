@@ -551,111 +551,47 @@ def prin():
 
 
 ############################################ CNN #########################################################################
+
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-
+import numpy as np
 
 class Dueling_DQN(nn.Module):
-
+ 
     def __init__(self, input_dim, output_dim):
         super(Dueling_DQN, self).__init__()
         self.input_dim = input_dim
         self.output_dim = output_dim
-        print('input_dim, output_dim:',input_dim, output_dim)
 
-        # self.conv = nn.Sequential(
-        #     nn.Conv2d(input_dim[0], 32, kernel_size=2, stride=2),
-        #     nn.ReLU(),
-        #     nn.Conv2d(32, 64, kernel_size=1, stride=1),
-        #     nn.ReLU()
-        # )
         self.conv = nn.Sequential(
-            nn.Conv2d(input_dim[0], 16, kernel_size=3, stride=2),
+            nn.Conv2d(input_dim[2], 32, kernel_size=3, stride=2),
             nn.ReLU(),
-            nn.Conv2d(16, 32, kernel_size=3, stride=2),
+            nn.Conv2d(32, 64, kernel_size=1, stride=1),
             nn.ReLU(),
-            nn.Conv2d(32, 32, kernel_size=3, stride=2),
+            nn.Conv2d(64, 64, kernel_size=1, stride=1),
             nn.ReLU()
         )
-        # self.conv1 = nn.Conv2d(3, 16, kernel_size=5, stride=2)
-        # self.bn1 = nn.BatchNorm2d(16)
-        # self.conv2 = nn.Conv2d(16, 32, kernel_size=5, stride=2)
-        # self.bn2 = nn.BatchNorm2d(32)
-        # self.conv3 = nn.Conv2d(32, 32, kernel_size=5, stride=2)
-        # self.bn3 = nn.BatchNorm2d(32)
-
         self.fc_input_dim = self.feature_size()
+        self.value_stream = nn.Sequential(
+            nn.Linear(self.fc_input_dim, 512),
+            nn.ReLU(),
+            nn.Linear(512, 1)
+        )
 
-        self.fc1_adv = nn.Linear(in_features=self.fc_input_dim, out_features=512)
-        self.fc1_val = nn.Linear(in_features=self.fc_input_dim, out_features=512)
-
-        self.fc2_adv = nn.Linear(in_features=512, out_features=self.output_dim)
-        self.fc2_val = nn.Linear(in_features=512, out_features=1)
-        self.relu = nn.ReLU()
-
+        self.advantage_stream = nn.Sequential(
+            nn.Linear(self.fc_input_dim, 512),
+            nn.ReLU(),
+            nn.Linear(512, self.output_dim)
+        )
 
     def forward(self, state):
         features = self.conv(state)
-        # x = F.relu(self.bn1(self.conv1(state)))
-        # x = F.relu(self.bn2(self.conv2(x)))
-        # x = F.relu(self.bn3(self.conv3(x)))
         features = features.view(features.size(0), -1)
+        values = self.value_stream(features)
+        advantages = self.advantage_stream(features)
+        qvals = values + (advantages - advantages.mean())
 
-        adv = self.relu(self.fc1_adv(features))
-        val = self.relu(self.fc1_val(features))
-
-        adv = self.fc2_adv(adv)
-        val = self.fc2_val(val).expand(features.size(0), self.output_dim)
-        x = val + adv - adv.mean(1).unsqueeze(1).expand(features.size(0), self.output_dim)
-
-        # values = self.value_stream(features)
-        # advantages = self.advantage_stream(features)
-        # qvals = values + (advantages - advantages.mean())
-
-        return x
+        return qvals
 
     def feature_size(self):
-        return self.conv(torch.autograd.Variable(torch.zeros([self.input_dim[0], self.input_dim[1], self.input_dim[2]]))).view(1, -1).size(1)
-
-
-
-
- 
-    # def __init__(self, input_dim, output_dim):
-    #     super(Dueling_DQN, self).__init__()
-    #     self.input_dim = input_dim
-    #     self.output_dim = output_dim
-
-    #     self.conv = nn.Sequential(
-    #         nn.Conv2d(input_dim[2], 32, kernel_size=3, stride=2),
-    #         nn.ReLU(),
-    #         nn.Conv2d(32, 64, kernel_size=1, stride=1),
-    #         nn.ReLU(),
-    #         nn.Conv2d(64, 64, kernel_size=1, stride=1),
-    #         nn.ReLU()
-    #     )
-    #     self.fc_input_dim = self.feature_size()
-    #     self.value_stream = nn.Sequential(
-    #         nn.Linear(self.fc_input_dim, 512),
-    #         nn.ReLU(),
-    #         nn.Linear(512, 1)
-    #     )
-
-    #     self.advantage_stream = nn.Sequential(
-    #         nn.Linear(self.fc_input_dim, 512),
-    #         nn.ReLU(),
-    #         nn.Linear(512, self.output_dim)
-    #     )
-
-    # def forward(self, state):
-    #     features = self.conv(state)
-    #     features = features.view(features.size(0), -1)
-    #     values = self.value_stream(features)
-    #     advantages = self.advantage_stream(features)
-    #     qvals = values + (advantages - advantages.mean())
-
-    #     return qvals
-
-    # def feature_size(self):
-    #     return self.conv(torch.autograd.Variable(torch.zeros([self.input_dim[2], self.input_dim[0], self.input_dim[1]]))).view(1, -1).size(1)
+        return self.conv(torch.autograd.Variable(torch.zeros([self.input_dim[2], self.input_dim[0], self.input_dim[1]]))).view(1, -1).size(1)
