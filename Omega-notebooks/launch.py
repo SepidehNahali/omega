@@ -13,11 +13,12 @@ from utils_schedules import *
 from environment_env_util import *
 from env_components_topolgy import *
 
+
 def exp1(name):
     num_gpus_per_machine = 4
     num_machines_per_rack = 4
     num_racks_per_cluster = 2
-    max_gpu_request = 8
+    max_gpu_request = 4
     max_job_len = 20
     jobqueue_maxlen = 10
     max_backlog_len = 0
@@ -42,31 +43,47 @@ def exp1(name):
                     delay_penalty=delay_penalty,
                     dismiss_penalty=dismiss_penalty,
                     target_num_job_done=target_num_job_done,
-                    gpu_request_skew=gpu_request_skew,
-                    job_len_skew=job_len_skew,
                     max_num_timesteps=60000)
 
-    BATCH_SIZE = 64
-    REPLAY_BUFFER_SIZE = 400000
+    BATCH_SIZE = 32
+    REPLAY_BUFFER_SIZE = 30000
     FRAME_HISTORY_LEN = 1
-    TARGET_UPDATE_FREQ = 500
+    TARGET_UPDATE_FREQ = 120
     GAMMA = 0.95
-    LEARNING_FREQ = 60
+    LEARNING_FREQ = 40
     LEARNING_RATE = 0.01
     ALPHA = 0.95
     EPS = 0.01
-    EXPLORATION_SCHEDULE = LinearSchedule(500000, 0.1)
-    LEARNING_STARTS = 1000
+    EXPLORATION_SCHEDULE = LinearSchedule(60000, 0.1)
+    LEARNING_STARTS = 10000
     NUM_EPOCH= 100
     NUM_EPISODE = 100
-    TAU = 1e-2
-    CLIP_RANGE = 400
-
     env = DQNTesting1(pa)
-    baselines = ['SJF', 'RANDOM', 'LJF']
-    WITH_MASK = False
-    SOFT_UPDATE = False
+    baselines = ['SJF', 'RANDOM']
+    
 
+
+    # topology_parameters=NetworkTopology(pa)
+    # topology_parameters.node_index_build()
+    # topology_parameters.create_graph()
+    # topology_parameters.create_adjacency_matrix()
+    # distancefromothers = 0
+    # jobGpusIDlist= [1,31,24]
+    # print(    topology_parameters.get_gpu_distance_from_all(1))
+
+    # for i in range(len(jobGpusIDlist)):
+    #     for j in range(i+1):
+    #       if(j<len(jobGpusIDlist)-1):
+    #         if(i!=j):
+    #           print(jobGpusIDlist[i],jobGpusIDlist[j],':',topology_parameters.get_gpu_distance_gpu(jobGpusIDlist[i],jobGpusIDlist[j]))
+    #           distancefromothers += topology_parameters.get_gpu_distance_gpu(jobGpusIDlist[i],jobGpusIDlist[j])
+    
+   
+    # print(distancefromothers)
+
+    # distancefromothers = [topology_parameters.get_gpu_distance_gpu(jobGpusIDlist[i],jobGpusIDlist[j]) for i in range(len(jobGpusIDlist)) for j in range(i+1) if i!=j]
+    
+    # print(sum(distancefromothers))
     def stopping_criterion(env, t):
         # notice that here t is the number of steps of the wrapped env,
         # which is different from the number of steps in the underlying env
@@ -78,21 +95,26 @@ def exp1(name):
     )
     train(
         env=env,
-        agent=DQNAgent(env, learning_rate=LEARNING_RATE, tau=TAU, gamma=GAMMA, buffer_size=REPLAY_BUFFER_SIZE,target_update_freq=TARGET_UPDATE_FREQ, soft_update=SOFT_UPDATE, with_mask=WITH_MASK),
+        agent=DQNAgent(env, learning_rate=LEARNING_RATE, gamma=GAMMA, buffer_size=REPLAY_BUFFER_SIZE,
+                       target_update_freq=TARGET_UPDATE_FREQ),
         optimizer_spec=optimizer,
         exploration=EXPLORATION_SCHEDULE,
         stopping_criterion=stopping_criterion,
+        replay_buffer_size=REPLAY_BUFFER_SIZE,
         batch_size=BATCH_SIZE,
+        gamma=GAMMA,
         learning_starts=LEARNING_STARTS,
         learning_freq=LEARNING_FREQ,
         frame_history_len=FRAME_HISTORY_LEN,
         # num_epoch = NUM_EPOCH,
         # num_episode = NUM_EPISODE
         exp_name=name,
-        baselines=baselines,
-        with_mask=WITH_MASK,
-        clip_range=CLIP_RANGE
+        baselines=baselines
     )
+
+  
+
+    return None
 
 
     return None
@@ -121,7 +143,6 @@ parser.add_argument('-n',
 # if vars(args)['e'] == 1:
 # exp1(vars(args)['n'])
 exp1('FirstM')
-# print(env.resources)
 # train(env)
 
 # if __name__ == '__main__':
