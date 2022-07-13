@@ -44,7 +44,7 @@ def exp1(name):
                     target_num_job_done=target_num_job_done,
                     gpu_request_skew=gpu_request_skew,
                     job_len_skew=job_len_skew,
-                    max_num_timesteps=90000)
+                    max_num_timesteps=60000)
 
     BATCH_SIZE = 64
     REPLAY_BUFFER_SIZE = 400000
@@ -56,7 +56,7 @@ def exp1(name):
     ALPHA = 0.95
     EPS = 0.01
     EXPLORATION_SCHEDULE = LinearSchedule(500000, 0.1)
-    LEARNING_STARTS = 30000
+    LEARNING_STARTS = 1000
     NUM_EPOCH= 100
     NUM_EPISODE = 100
     TAU = 1e-2
