@@ -90,24 +90,24 @@ def compute_GPU_distances(job):
             y_=job.gpus[1][cordin-1]
             z_=job.gpus[2][cordin-1]
             gpu_Id = x_ * HEIGHT * DEPTH + y_ * DEPTH + z_# get the first gpu number dims found randomly in(x,y,z)
+            # print('gpu_Id:',gpu_Id,x_,y_,z_)
             jobGpusIDlist.append(gpu_Id)
             
         # for gp in jobGpusIDlist:
         if(len(jobGpusIDlist)>1):
-            nearest = topology_parameters.get_gpu_sort_nearest(jobGpusIDlist[0]) #containing the first node itself
-            a=jobGpusIDlist # we could use (==).all in if statement compariation for np array too
-            a.sort()
-            b=nearest[:len(jobGpusIDlist)].tolist()
-            b.sort() # index is because selecting first n of needed gpus from nearest gpus list
-            # print(topology_parameters.get_gpu_distance_from_all(1))
-            
+            # nearest = topology_parameters.get_gpu_sort_nearest(jobGpusIDlist[0]) #containing the first node itself
+            # a=jobGpusIDlist 
+            # a.sort()
+            # b=nearest[:len(jobGpusIDlist)].tolist()
+            # b.sort() # index is because selecting first n of needed gpus from nearest gpus list
+            # # print(topology_parameters.get_gpu_distance_from_all(1))
             for i in range(len(jobGpusIDlist)):
-                      distancefromothers += topology_parameters.get_gpu_distance_gpu(jobGpusIDlist[i],jobGpusIDlist[0])
-                      
-            # distancefromothers = [topology_parameters.get_gpu_distance_gpu(jobGpusIDlist[i],jobGpusIDlist[j]) for i in range(len(jobGpusIDlist)) for j in range(i+1) if i!=j]
+                # distancefromothers += topology_parameters.get_gpu_distance_gpu(jobGpusIDlist[i],jobGpusIDlist[0])
+                distancefromothers = [topology_parameters.get_gpu_distance_gpu(jobGpusIDlist[i],jobGpusIDlist[j]) for i in range(len(jobGpusIDlist)) for j in range(i+1) if i!=j]
+                distancefromothers = sum(distancefromothers)
+                # print('distancefromothers: ',distancefromothers,'jobGpusIDlist[i],jobGpusIDlist[0]:')
 
-                   
-            # switchtime = sum(distancefromothers)
+
         #############################################################################Add switch time between gpus
         return distancefromothers
 
