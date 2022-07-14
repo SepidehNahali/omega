@@ -22,7 +22,7 @@ def exp1(name):
     max_job_len = 30
     jobqueue_maxlen = 10
     max_backlog_len = 0
-    new_job_rate = 0.8
+    new_job_rate = 0.6
     target_num_job_done = 150
     delay_penalty = -1
     hold_penalty = -2
@@ -41,7 +41,7 @@ def exp1(name):
                     delay_penalty=delay_penalty,
                     dismiss_penalty=dismiss_penalty,
                     target_num_job_done=target_num_job_done,
-                    max_num_timesteps=60000)
+                    max_num_timesteps=90000)
 
     BATCH_SIZE = 64
     REPLAY_BUFFER_SIZE = 30000
@@ -53,7 +53,7 @@ def exp1(name):
     ALPHA = 0.95
     EPS = 0.01
     EXPLORATION_SCHEDULE = LinearSchedule(60000, 0.1)
-    LEARNING_STARTS = 10000
+    LEARNING_STARTS = 20000
     NUM_EPOCH= 100
     NUM_EPISODE = 100
     env = DQNTesting1(pa)
