@@ -658,9 +658,15 @@ class Env(ABC):
         for j in self.jobqueue[self.get_waiting_jobs()]:
             reward -= calc_job_minbatch_speed(job=j, gpus_per_rack=self.gpus_per_rack, ret_reducer=self.pa.ret_reducer, singleormulti='single') * self.pa.hold_penalty
 
-        # for j in self.backlog:
-        #     reward += calc_job_minbatch_speed(job=j, gpus_per_rack=self.gpus_per_rack, ret_reducer=self.pa.ret_reducer, singleormulti='single') * self.pa.dismiss_penalty
+        for j in self.backlog:
+            reward += calc_job_minbatch_speed(job=j, gpus_per_rack=self.gpus_per_rack, ret_reducer=self.pa.ret_reducer, singleormulti='single') * self.pa.dismiss_penalty
+        
+        
+        reward+=32-len(np.where(self.resources == -1)[0])
         reward = np.clip(reward, -300, 100)
+
+        
+        
         return reward
 
 
