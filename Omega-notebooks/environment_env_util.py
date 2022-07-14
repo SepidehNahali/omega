@@ -119,7 +119,7 @@ def calc_speed_multi(job,gradsize, g_assigned, d_m, tt_m, numracks,
     rt_m = get_ret_asym(
         gradsize, g_assigned, numracks, ret_reducer)
     # Todo-cbb. Add in reduction time increaser for number of racks.
-    minbatch_speed = d_m * 1.0 / (tt_m + 1.0 * scale * rt_m)#+compute_GPU_distances(job))
+    minbatch_speed = d_m * 1.0 / (tt_m + 1.0 * scale * rt_m+compute_GPU_distances(job))
     minbatch_speed *= g_assigned
     return rt_m, minbatch_speed
 
