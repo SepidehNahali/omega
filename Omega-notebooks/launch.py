@@ -18,17 +18,15 @@ def exp1(name):
     num_gpus_per_machine = 4
     num_machines_per_rack = 4
     num_racks_per_cluster = 2
-    max_gpu_request = 4
-    max_job_len = 20
+    max_gpu_request = 8
+    max_job_len = 30
     jobqueue_maxlen = 10
     max_backlog_len = 0
     new_job_rate = 0.8
     target_num_job_done = 150
-    delay_penalty = 1
-    hold_penalty = 2
+    delay_penalty = -1
+    hold_penalty = -2
     dismiss_penalty = -1
-    gpu_request_skew = -1
-    job_len_skew = 1
 
 
     pa = Parameters(num_gpus_per_machine=num_gpus_per_machine,
@@ -45,7 +43,7 @@ def exp1(name):
                     target_num_job_done=target_num_job_done,
                     max_num_timesteps=60000)
 
-    BATCH_SIZE = 32
+    BATCH_SIZE = 64
     REPLAY_BUFFER_SIZE = 30000
     FRAME_HISTORY_LEN = 1
     TARGET_UPDATE_FREQ = 120
