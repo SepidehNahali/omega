@@ -656,7 +656,7 @@ class Env(ABC):
             # if j.stepcounter == 0:
             #     reward += j.job_len * j.gpu_request
         for j in self.jobqueue[self.get_waiting_jobs()]:
-            reward -= calc_job_minbatch_speed(job=j, gpus_per_rack=self.gpus_per_rack, ret_reducer=self.pa.ret_reducer, singleormulti='single') * self.pa.hold_penalty
+            reward += calc_job_minbatch_speed(job=j, gpus_per_rack=self.gpus_per_rack, ret_reducer=self.pa.ret_reducer, singleormulti='single') * self.pa.hold_penalty
 
         for j in self.backlog:
             reward += calc_job_minbatch_speed(job=j, gpus_per_rack=self.gpus_per_rack, ret_reducer=self.pa.ret_reducer, singleormulti='single') * self.pa.dismiss_penalty
