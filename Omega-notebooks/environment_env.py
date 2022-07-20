@@ -548,56 +548,32 @@ class Env(ABC):
         gpus : tuple
             A tuple represents the coordinates of selected gpus.git status
         """
-        def get_kth_dims(f):#returns the Kth element dimentions in the 3-darray of self.resources
-            assert(f<32)
-            if f==3:
-               return 0,0,3
-            if f==6:
-               return 0,1,2
-            if f==7:
-               return 0,1,3
-            if f==11:
-               return 0,2,3
-            if f<=15:
-                x=0
-                y = round(f/4)
-                if(y>=4):
-                  y=3
-                z = f - 4*y
-            if f>15:
-                x=1
-                f=f-16
-                y=int(np.floor(f/4))
-                if(y>=4):
-                  y=3
-                z= f- 4*y
-            return x,y,z
+
+          def get_kth_dims(idx,zMax,xMax,yMax):#returns the Kth element dimentions in the 3-darray of self.resources
+                assert(idx<zMax*xMax*yMax)
+                z = int(idx / (xMax * yMax))
+                idx -= (z * xMax * yMax);
+                y = int(idx / xMax)
+                x = int(idx % xMax)
+            return  z,y,x 
         first_avl_gpus = self.get_avl_gpus()
 
-        # x0 = self.get_avl_gpus(0)[0][:k] # first k index number of the first dim of resources(num of racks)
-        # x1 = self.get_avl_gpus(0)[1][:k] # first k index number of the second dim of resources(machine per rack)
-        # x2 = self.get_avl_gpus(0)[2][:k] # first k index number of the third dim of resources(gpu per machine)
-        
         x_ = int(self.get_avl_gpus()[0][:1])####find the first idle gpu as before(first dim)
         y_ = int(self.get_avl_gpus()[1][:1])####find the first idle gpu as before(second dim)
         z_ = int(self.get_avl_gpus()[2][:1])####find the first idle gpu as before(third dim)
     
-        WIDTH = 2 #(machine per rack)
-        DEPTH = 4 #(gpu per machine)
-        HEIGHT = 4 
+        WIDTH = self.pa.num_racks_per_cluster # 2
+        DEPTH = self.pa.num_machines_per_rack # 4
+        HEIGHT = self.pa.num_gpus_per_machine # 4
         x0 = np.where(self.resources == -1)[0][:0]# create three empty array to put the nearest gpu dims in them
         x1 = np.where(self.resources == -1)[1][:0]
         x2 = np.where(self.resources == -1)[2][:0]#(by appending will be extended to (k,) or np.where(self.resources == -1)[2][:k])
 
         first_gpu_Id = x_ * HEIGHT * DEPTH + y_ * DEPTH + z_# get the first gpu number dims found randomly in(x,y,z)
-
         get_nearest = self.topology_parameters.get_gpu_sort_nearest(first_gpu_Id)#search nearest gpus to it
-        # x0=np.append(x0,x_)# append the  to x0 the first gpu
-        # x1=np.append(x1,y_)# append the  to x1 the first gpu
-        # x2=np.append(x2,z_)# append the  to x2 the first gpu
         idleneighbour=0
         for i in range(len(get_nearest)-1):# for each neighbor gpu ID:[3,34,2,5],len=3,i=1,4
-            x,y,z= get_kth_dims(get_nearest[i])# tell the dims in resources matrice
+            x,y,z= get_kth_dims(get_nearest[i],WIDTH,DEPTH,HEIGHT)# tell the dims in resources matrice
             if (self.resources[x][y][z]==-1): # to make sure that the neighbouring GPUs are idle
                 idleneighbour=idleneighbour+1
                 if (idleneighbour>k):#find the rest k-1 gpus from the sorted list
