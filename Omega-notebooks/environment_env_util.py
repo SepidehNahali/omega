@@ -74,7 +74,6 @@ def calc_speed_single(gradsize, gpu_request, d_mj_tflop, tt_m, numracks, ret_red
     return rt_m, minbatch_speed
 
 def compute_GPU_distances(job):
-        ############################################################################## Add switch time between gpus
     from env_components_topolgy import NetworkTopology
     topology_parameters = NetworkTopology()
     switchtime = 0
@@ -95,12 +94,6 @@ def compute_GPU_distances(job):
             
         # for gp in jobGpusIDlist:
         if(len(jobGpusIDlist)>1):
-            # nearest = topology_parameters.get_gpu_sort_nearest(jobGpusIDlist[0]) #containing the first node itself
-            # a=jobGpusIDlist 
-            # a.sort()
-            # b=nearest[:len(jobGpusIDlist)].tolist()
-            # b.sort() # index is because selecting first n of needed gpus from nearest gpus list
-            # # print(topology_parameters.get_gpu_distance_from_all(1))
             for i in range(len(jobGpusIDlist)):
                 # distancefromothers += topology_parameters.get_gpu_distance_gpu(jobGpusIDlist[i],jobGpusIDlist[0])
                 distancefromothers = [topology_parameters.get_gpu_distance_gpu(jobGpusIDlist[i],jobGpusIDlist[j]) for i in range(len(jobGpusIDlist)) for j in range(i+1) if i!=j]
@@ -108,7 +101,6 @@ def compute_GPU_distances(job):
                 # print('distancefromothers: ',distancefromothers,'jobGpusIDlist[i],jobGpusIDlist[0]:')
 
 
-        #############################################################################Add switch time between gpus
         return distancefromothers
 
 
