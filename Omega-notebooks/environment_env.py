@@ -638,10 +638,9 @@ class Env(ABC):
             reward += calc_job_minbatch_speed(job=j, gpus_per_rack=self.gpus_per_rack, ret_reducer=self.pa.ret_reducer, singleormulti='single') * self.pa.dismiss_penalty
         
         
-        reward*=32-len(np.where(self.resources == -1)[0])
+        reward*=(self.pa.num_racks_per_cluster*self.pa.num_machines_per_rack*self.pa.num_gpus_per_machine)-len(np.where(self.resources == -1)[0])
 #         reward = np.clip(reward, -300, 100)
 
-        
         
         return reward
 
