@@ -549,13 +549,13 @@ class Env(ABC):
             A tuple represents the coordinates of selected gpus.git status
         """
 
-          def get_kth_dims(idx,zMax,xMax,yMax):#returns the Kth element dimentions in the 3-darray of self.resources
+        def get_kth_dims(idx,zMax,xMax,yMax):#returns the Kth element dimentions in the 3-darray of self.resources
                 assert(idx<zMax*xMax*yMax)
                 z = int(idx / (xMax * yMax))
                 idx -= (z * xMax * yMax);
                 y = int(idx / xMax)
                 x = int(idx % xMax)
-            return  z,y,x 
+                return  z,y,x 
         first_avl_gpus = self.get_avl_gpus()
 
         x_ = int(self.get_avl_gpus()[0][:1])####find the first idle gpu as before(first dim)
