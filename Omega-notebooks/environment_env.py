@@ -156,16 +156,15 @@ class Env(ABC):
         self.resources = -np.ones((self.pa.num_racks_per_cluster, self.pa.num_machines_per_rack,
                                    self.pa.num_gpus_per_machine), dtype=np.int32)  # Hossein
 
+
         # self.jobqueue = np.full(self.pa.jobqueue_maxlen, None, dtype=np.object) # Hossein
 
         self.jobqueue = np.array([])
         self.backlog = deque(maxlen=self.pa.max_backlog_len)
-
         self.jobqueue_maxlen = self.pa.jobqueue_maxlen
         self.j_id = 0
         self.total_step = 0
         self.num_job_finished = 0
-
         self.datagenerator = DataGenerating(max_gpu_request=self.pa.max_gpu_request, max_len=self.pa.max_job_len,
                                             resources=self.resources,
                                             ret_reducer=self.pa.ret_reducer)
@@ -174,6 +173,198 @@ class Env(ABC):
         self.gpus_per_rack = self.resources.shape[1] * self.resources.shape[2]
         self.curr_time = 0
         self.episode_reward = np.array([])
+
+
+        # print('resources: ',self.resources)
+        skew1 = self.pa.job_len_skew
+        skew2 = self.pa.gpu_requst_skew
+        self.len_seq, self.gpu_request_seq = self.datagenerator.data_gen(50, skew1, skew2)
+
+        d_ex, m, tt_m, d_fj_tflop, gradsize = self.datagenerator.dnn_data_gen(self.gpu_request_seq[self.j_id],
+                                                                              self.len_seq[self.j_id])
+        j = Job(id=self.j_id, gpu_request=3,len=self.len_seq[self.j_id], ts_0j=self.curr_time, d_exj_tlop=d_ex, tt_m=tt_m,m=m, d_fj_tflop=d_fj_tflop, gradsize=gradsize)
+        self.jobqueue = np.append(self.jobqueue, j)
+        j.gpus = ([0],[0],[0])
+        j.status = 'running'
+        self.resources[0, 0, 0] = self.j_id
+        self.j_id += 1
+        
+        
+        skew1 = self.pa.job_len_skew
+        skew2 = self.pa.gpu_requst_skew
+        self.len_seq, self.gpu_request_seq = self.datagenerator.data_gen(50, skew1, skew2)
+
+        d_ex, m, tt_m, d_fj_tflop, gradsize = self.datagenerator.dnn_data_gen(self.gpu_request_seq[self.j_id],
+                                                                              self.len_seq[self.j_id])
+        j = Job(id=self.j_id, gpu_request=3,len=self.len_seq[self.j_id], ts_0j=self.curr_time, d_exj_tlop=d_ex, tt_m=tt_m,m=m, d_fj_tflop=d_fj_tflop, gradsize=gradsize)
+        self.jobqueue = np.append(self.jobqueue, j)
+        j.gpus = ([0],[1],[0])
+        j.status = 'running'
+        self.resources[0, 1, 0] = self.j_id
+        self.j_id += 1
+
+        
+        skew1 = self.pa.job_len_skew
+        skew2 = self.pa.gpu_requst_skew
+        self.len_seq, self.gpu_request_seq = self.datagenerator.data_gen(50, skew1, skew2)
+
+        d_ex, m, tt_m, d_fj_tflop, gradsize = self.datagenerator.dnn_data_gen(self.gpu_request_seq[self.j_id],
+                                                                              self.len_seq[self.j_id])
+        j = Job(id=self.j_id, gpu_request=3,len=self.len_seq[self.j_id], ts_0j=self.curr_time, d_exj_tlop=d_ex, tt_m=tt_m,m=m, d_fj_tflop=d_fj_tflop, gradsize=gradsize)
+        self.jobqueue = np.append(self.jobqueue, j)
+        j.gpus = ([0],[2],[0])
+        j.status = 'running'
+        self.resources[0, 2, 0] = self.j_id
+        self.j_id += 1
+
+
+        skew1 = self.pa.job_len_skew
+        skew2 = self.pa.gpu_requst_skew
+        self.len_seq, self.gpu_request_seq = self.datagenerator.data_gen(50, skew1, skew2)
+
+
+        d_ex, m, tt_m, d_fj_tflop, gradsize = self.datagenerator.dnn_data_gen(self.gpu_request_seq[self.j_id],
+                                                                              self.len_seq[self.j_id])
+        j = Job(id=self.j_id, gpu_request=3,len=self.len_seq[self.j_id], ts_0j=self.curr_time, d_exj_tlop=d_ex, tt_m=tt_m,m=m, d_fj_tflop=d_fj_tflop, gradsize=gradsize)
+        self.jobqueue = np.append(self.jobqueue, j)
+        j.gpus = ([0],[3],[0])
+        j.status = 'running'
+        self.resources[0, 3, 0] = self.j_id
+        self.j_id += 1
+
+
+        
+        skew1 = self.pa.job_len_skew
+        skew2 = self.pa.gpu_requst_skew
+        self.len_seq, self.gpu_request_seq = self.datagenerator.data_gen(50, skew1, skew2)
+
+        d_ex, m, tt_m, d_fj_tflop, gradsize = self.datagenerator.dnn_data_gen(self.gpu_request_seq[self.j_id],
+                                                                              self.len_seq[self.j_id])
+        j = Job(id=self.j_id, gpu_request=3,len=self.len_seq[self.j_id], ts_0j=self.curr_time, d_exj_tlop=d_ex, tt_m=tt_m,m=m, d_fj_tflop=d_fj_tflop, gradsize=gradsize)
+        self.jobqueue = np.append(self.jobqueue, j)
+        j.gpus = ([0],[3],[2])
+        j.status = 'running'
+        self.resources[0, 3, 2] = self.j_id
+        self.j_id += 1
+
+
+
+        
+        skew1 = self.pa.job_len_skew
+        skew2 = self.pa.gpu_requst_skew
+        self.len_seq, self.gpu_request_seq = self.datagenerator.data_gen(50, skew1, skew2)
+
+        d_ex, m, tt_m, d_fj_tflop, gradsize = self.datagenerator.dnn_data_gen(self.gpu_request_seq[self.j_id],
+                                                                              self.len_seq[self.j_id])
+        j = Job(id=self.j_id, gpu_request=3,len=self.len_seq[self.j_id], ts_0j=self.curr_time, d_exj_tlop=d_ex, tt_m=tt_m,m=m, d_fj_tflop=d_fj_tflop, gradsize=gradsize)
+        self.jobqueue = np.append(self.jobqueue, j)
+        j.gpus = ([0],[2],[3])
+        j.status = 'running'
+        self.resources[0, 2, 3] = self.j_id
+        self.j_id += 1
+
+
+
+        
+        skew1 = self.pa.job_len_skew
+        skew2 = self.pa.gpu_requst_skew
+        self.len_seq, self.gpu_request_seq = self.datagenerator.data_gen(50, skew1, skew2)
+
+        d_ex, m, tt_m, d_fj_tflop, gradsize = self.datagenerator.dnn_data_gen(self.gpu_request_seq[self.j_id],
+                                                                              self.len_seq[self.j_id])
+        j = Job(id=self.j_id, gpu_request=3,len=self.len_seq[self.j_id], ts_0j=self.curr_time, d_exj_tlop=d_ex, tt_m=tt_m,m=m, d_fj_tflop=d_fj_tflop, gradsize=gradsize)
+        self.jobqueue = np.append(self.jobqueue, j)
+        j.gpus = ([1],[2],[3])
+        j.status = 'running'
+        self.resources[1, 2, 3] = self.j_id
+        self.j_id += 1
+
+
+
+        
+        skew1 = self.pa.job_len_skew
+        skew2 = self.pa.gpu_requst_skew
+        self.len_seq, self.gpu_request_seq = self.datagenerator.data_gen(50, skew1, skew2)
+
+        d_ex, m, tt_m, d_fj_tflop, gradsize = self.datagenerator.dnn_data_gen(self.gpu_request_seq[self.j_id],
+                                                                              self.len_seq[self.j_id])
+        j = Job(id=self.j_id, gpu_request=3,len=self.len_seq[self.j_id], ts_0j=self.curr_time, d_exj_tlop=d_ex, tt_m=tt_m,m=m, d_fj_tflop=d_fj_tflop, gradsize=gradsize)
+        self.jobqueue = np.append(self.jobqueue, j)
+        j.gpus = ([1],[3],[3])
+        j.status = 'running'
+        self.resources[1, 3, 3] = self.j_id
+        self.j_id += 1
+
+
+
+        
+        skew1 = self.pa.job_len_skew
+        skew2 = self.pa.gpu_requst_skew
+        self.len_seq, self.gpu_request_seq = self.datagenerator.data_gen(50, skew1, skew2)
+
+        d_ex, m, tt_m, d_fj_tflop, gradsize = self.datagenerator.dnn_data_gen(self.gpu_request_seq[self.j_id],
+                                                                              self.len_seq[self.j_id])
+        j = Job(id=self.j_id, gpu_request=3,len=self.len_seq[self.j_id], ts_0j=self.curr_time, d_exj_tlop=d_ex, tt_m=tt_m,m=m, d_fj_tflop=d_fj_tflop, gradsize=gradsize)
+        self.jobqueue = np.append(self.jobqueue, j)
+        j.gpus = ([0],[2],[2])
+        j.status = 'running'
+        self.resources[0, 2, 2] = self.j_id
+        self.j_id += 1
+
+
+
+        
+        skew1 = self.pa.job_len_skew
+        skew2 = self.pa.gpu_requst_skew
+        self.len_seq, self.gpu_request_seq = self.datagenerator.data_gen(50, skew1, skew2)
+
+        d_ex, m, tt_m, d_fj_tflop, gradsize = self.datagenerator.dnn_data_gen(self.gpu_request_seq[self.j_id],
+                                                                              self.len_seq[self.j_id])
+        j = Job(id=self.j_id, gpu_request=3,len=self.len_seq[self.j_id], ts_0j=self.curr_time, d_exj_tlop=d_ex, tt_m=tt_m,m=m, d_fj_tflop=d_fj_tflop, gradsize=gradsize)
+        self.jobqueue = np.append(self.jobqueue, j)
+        j.gpus = ([1],[2],[2])
+        j.status = 'running'
+        self.resources[1, 2, 2] = self.j_id
+        self.j_id += 1
+
+
+
+        
+        skew1 = self.pa.job_len_skew
+        skew2 = self.pa.gpu_requst_skew
+        self.len_seq, self.gpu_request_seq = self.datagenerator.data_gen(50, skew1, skew2)
+
+        d_ex, m, tt_m, d_fj_tflop, gradsize = self.datagenerator.dnn_data_gen(self.gpu_request_seq[self.j_id],
+                                                                              self.len_seq[self.j_id])
+        j = Job(id=self.j_id, gpu_request=3,len=self.len_seq[self.j_id], ts_0j=self.curr_time, d_exj_tlop=d_ex, tt_m=tt_m,m=m, d_fj_tflop=d_fj_tflop, gradsize=gradsize)
+        self.jobqueue = np.append(self.jobqueue, j)
+        j.gpus = ([1],[2],[1])
+        j.status = 'running'
+        self.resources[1, 2, 1] = self.j_id
+        self.j_id += 1
+
+
+
+        
+        skew1 = self.pa.job_len_skew
+        skew2 = self.pa.gpu_requst_skew
+        self.len_seq, self.gpu_request_seq = self.datagenerator.data_gen(50, skew1, skew2)
+
+        d_ex, m, tt_m, d_fj_tflop, gradsize = self.datagenerator.dnn_data_gen(self.gpu_request_seq[self.j_id],
+                                                                              self.len_seq[self.j_id])
+        j = Job(id=self.j_id, gpu_request=3,len=self.len_seq[self.j_id], ts_0j=self.curr_time, d_exj_tlop=d_ex, tt_m=tt_m,m=m, d_fj_tflop=d_fj_tflop, gradsize=gradsize)
+        self.jobqueue = np.append(self.jobqueue, j)
+        j.gpus = ([1],[2],[0])
+        j.status = 'running'
+        self.resources[1, 2, 0] = self.j_id
+        self.j_id += 1
+
+
+
+
+
+        print('resources: ',self.resources)
+        
         return self.observe()
 
     @abstractmethod
