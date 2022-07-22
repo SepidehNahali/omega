@@ -95,9 +95,9 @@ def compute_GPU_distances(job):
         # for gp in jobGpusIDlist:
         if(len(jobGpusIDlist)>1):
             for i in range(len(jobGpusIDlist)):
-                # distancefromothers += topology_parameters.get_gpu_distance_gpu(jobGpusIDlist[i],jobGpusIDlist[0])
-                distancefromothers = [topology_parameters.get_gpu_distance_gpu(jobGpusIDlist[i],jobGpusIDlist[j]) for i in range(len(jobGpusIDlist)) for j in range(i+1) if i!=j]
-                distancefromothers = sum(distancefromothers)
+                distancefromothers += topology_parameters.get_gpu_distance_gpu(jobGpusIDlist[i],jobGpusIDlist[0])
+#                 distancefromothers = [topology_parameters.get_gpu_distance_gpu(jobGpusIDlist[i],jobGpusIDlist[j]) for i in range(len(jobGpusIDlist)) for j in range(i+1) if i!=j]
+#                 distancefromothers = sum(distancefromothers)
                 # print('distancefromothers: ',distancefromothers,'jobGpusIDlist[i],jobGpusIDlist[0]:')
 
 
