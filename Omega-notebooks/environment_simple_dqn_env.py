@@ -158,6 +158,7 @@ class DQNTesting1(Env):
         # width = self.jobqueue_maxlen * (self.pa.max_gpu_request)
         width = self.resources.size + self.jobqueue_maxlen * self.pa.max_gpu_request
         image = np.zeros((height, width))
+#         image[:,2]=9
         image[:, 0: self.resources.size] = self.get_cluster_canvas()[:, :]
         pt = self.resources.size
         for j in self.jobqueue:
