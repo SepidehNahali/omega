@@ -16,25 +16,25 @@ class BaseLines:
                     action = self.sjf_action(tmpenv.jobqueue)
                 elif scheduler == 'RANDOM':
                     action = self.random_action(tmpenv.jobqueue)
-                tmpenv.step(action)
-                # print(f'{tmpenv.num_job_finished}{tmpenv.pa.target_num_job_arrive}')
+                o,r,d=tmpenv.step(action)
+
             rewards[scheduler] = np.sum(tmpenv.episode_reward)
         return rewards
-
 
     def sjf_action(self, jobqueue):
         action = 0
 
-        lst = np.arange(len(jobqueue))
+        if len(jobqueue) > 0:
+            lst = np.array([j.job_len for j in jobqueue])
 
-        def getter(i):
-            return jobqueue[i].status
+            def getter(j):
+                return j.status
 
-        vfunc = np.vectorize(getter, otypes=[str])
-        lst = np.where(vfunc(lst) == 'waiting')[0]
-        if len(lst) > 0:
-            w = np.array([jobqueue[j].job_len for j in lst])
-            action = lst[np.argmin(w)]
+            vfunc = np.vectorize(getter, otypes=[str])
+            runnings = np.where(vfunc(jobqueue) == 'running')
+            lst[runnings] = 1000
+            action = np.argmin(lst)
+
         return action
 
     def random_action(self, jobqueue):
