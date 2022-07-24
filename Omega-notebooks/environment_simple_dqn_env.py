@@ -150,6 +150,7 @@ class DQNTesting1(Env):
         self.remove_jobs(done_jobs)
 
         self.advance_runningjobs_onestep()
+        self.update_resources()
         return self.observe(), self.reward(), self.done
 
     def observe(self):
@@ -175,7 +176,9 @@ class DQNTesting1(Env):
         # print(' Used GPUs index ',        used )
         for i, j in zip(used[0], used[1]):
             # print(f'{get_j_idx_by_id(gpus[i,j], jobqueue)} {gpus[i,j]}')
-            j_idx = self.get_j_idx_by_id(gpus[i, j])[0][0]
+#             j_idx = self.get_j_idx_by_id(gpus[i, j])[0][0]
+            j_idx = gpus[i,j]
+
             image[0:self.jobqueue[j_idx].job_len - self.jobqueue[j_idx].progress, j] = 1
         # plt.imshow(image)
         # plt.show()
