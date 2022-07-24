@@ -713,7 +713,8 @@ class Env(ABC):
     def update_resources(self):
         for j_idx in range(len(self.jobqueue)):
             gpus = self.jobqueue[j_idx].gpus
-            self.resources[gpus] = j_idx
+            if gpus:
+                self.resources[gpus] = j_idx
 
     def get_first_k_gpus(self, k: int, random: bool=False) -> tuple:
         """Get random k available gpus
