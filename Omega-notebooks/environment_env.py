@@ -565,14 +565,12 @@ class Env(ABC):
         """
         if all(x == -1 for x in self.resources[gpus]):
             self.resources[gpus] = self.jobqueue[j_idx].job_id
-            # print('job ',self.jobqueue[j_idx].job_id,' Just assigend  cordination: ',gpus )
+            print('job ',self.jobqueue[j_idx].job_id,' Just assigend  cordination: ',gpus )
 
-            # print('Job id: ',j_idx)
             self.jobqueue[j_idx].status = 'running'
             self.jobqueue[j_idx].gpus = gpus
-            # print('self.resources : ',self.resources)
-            # for ii in range(len(self.jobqueue)):
-            #     print('Job Queue: ',self.jobqueue[ii].job_id)
+            for ii in range(len(self.jobqueue)):
+                print('Job Queue id, idx: ',self.jobqueue[ii].job_id,self.jobqueue[j_idx])
 
             return True
         return False
@@ -701,7 +699,8 @@ class Env(ABC):
 
         done_jobs = np.where(vfunc(self.jobqueue))
 
-        # print('done jobs: ',done_jobs)
+        print('done jobs: ',done_jobs)
+        print('self.resources : ',self.resources)
         # print('done jobs len: ',len(done_jobs))
 
 
@@ -754,19 +753,60 @@ class Env(ABC):
                 return  z,y,x 
         first_avl_gpus = self.get_avl_gpus()
 
-        x_ = int(self.get_avl_gpus()[0][:1])####find the first idle gpu as before(first dim)
-        y_ = int(self.get_avl_gpus()[1][:1])####find the first idle gpu as before(second dim)
-        z_ = int(self.get_avl_gpus()[2][:1])####find the first idle gpu as before(third dim)
+        # x_ = int(self.get_avl_gpus()[0][:1])####find the first idle gpu as before(first dim)
+        # y_ = int(self.get_avl_gpus()[1][:1])####find the first idle gpu as before(second dim)
+        # z_ = int(self.get_avl_gpus()[2][:1])####find the first idle gpu as before(third dim)
     
         WIDTH = self.pa.num_racks_per_cluster # 2
         DEPTH = self.pa.num_machines_per_rack # 4
         HEIGHT = self.pa.num_gpus_per_machine # 4
+        
+        
+        each_rack_free_gpus = []
+        each_rack_free_machine = []
+        most_epmpty_rack = 0
+        
+        for z in range(WIDTH):
+            if len(np.where(self.resources[z,:,:]==-1)[0])!=0:
+              each_rack_free_gpus.append(len(np.where(self.resources[z,:,:]==-1)[0]))# number of free gpus in rack 0 ... i
+        
+        
+        maxfreerack = each_rack_free_gpus.index(max(each_rack_free_gpus))# max number of free gpus in each rack
+        minfreerack = each_rack_free_gpus.index(min(each_rack_free_gpus))# max number of free gpus in each rack
+
+        if k!=1:     ##################### for jobs with 1 gpu request
+            for f in range(DEPTH):
+                each_rack_free_machine.append(len(np.where(self.resources[maxfreerack,f,:]==-1)[0]))# number of free gpus in rack 0 ... i
+            maxfreemachine = each_rack_free_machine.index(max(each_rack_free_machine))# max number of free gpus in each rack
+            a = np.where(self.resources[maxfreerack,maxfreemachine,:]==-1)[0][0]# third dimension of a free GPU
+            x_=maxfreerack
+            y_=maxfreemachine
+            z_=a
+        
+        
+        else:
+            for f in range(DEPTH):
+                each_rack_free_machine.append(len(np.where(self.resources[minfreerack,f,:]==-1)[0]))# number of free gpus in rack 0 ... i
+            minfreemachine = each_rack_free_machine.index(max(each_rack_free_machine))# max number of free gpus in each rack
+            b = np.where(self.resources[minfreerack,minfreemachine,:]==-1)[0][0]# third dimension of a free GPU
+            x_=minfreerack
+            y_=minfreemachine
+            z_=b
+        
+
+         
+        
+
+        ####################################################### First empty GPU will be in resources[maxfreerack,maxfreemachine,a]
+        
+        
+        first_gpu_Id = x_ * HEIGHT * DEPTH + y_ * DEPTH + z_# get the first gpu number dims found randomly in(x,y,z)
+        get_nearest = self.topology_parameters.get_gpu_sort_nearest(first_gpu_Id)#search nearest gpus to it
+        
         x0 = np.where(self.resources == -1)[0][:0]# create three empty array to put the nearest gpu dims in them
         x1 = np.where(self.resources == -1)[1][:0]
         x2 = np.where(self.resources == -1)[2][:0]#(by appending will be extended to (k,) or np.where(self.resources == -1)[2][:k])
 
-        first_gpu_Id = x_ * HEIGHT * DEPTH + y_ * DEPTH + z_# get the first gpu number dims found randomly in(x,y,z)
-        get_nearest = self.topology_parameters.get_gpu_sort_nearest(first_gpu_Id)#search nearest gpus to it
         idleneighbour=0
         for i in range(len(get_nearest)-1):# for each neighbor gpu ID:[3,34,2,5],len=3,i=1,4
             x,y,z= get_kth_dims(get_nearest[i],WIDTH,DEPTH,HEIGHT)# tell the dims in resources matrice
@@ -839,7 +879,6 @@ class Env(ABC):
 
         
         return reward
-
 
 
 
