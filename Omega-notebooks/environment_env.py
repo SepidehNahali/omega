@@ -570,7 +570,7 @@ class Env(ABC):
             self.jobqueue[j_idx].status = 'running'
             self.jobqueue[j_idx].gpus = gpus
             for ii in range(len(self.jobqueue)):
-                print('Job Queue id, idx: ',self.jobqueue[ii].job_id,self.jobqueue[j_idx])
+                # print('Job Queue id, idx: ',self.jobqueue[ii].job_id,self.jobqueue[j_idx])
 
             return True
         return False
@@ -766,36 +766,53 @@ class Env(ABC):
         each_rack_free_machine = []
         most_epmpty_rack = 0
         
-        for z in range(WIDTH):
-            if len(np.where(self.resources[z,:,:]==-1)[0])!=0:
-              each_rack_free_gpus.append(len(np.where(self.resources[z,:,:]==-1)[0]))# number of free gpus in rack 0 ... i
-        
-        
-        maxfreerack = each_rack_free_gpus.index(max(each_rack_free_gpus))# max number of free gpus in each rack
-        minfreerack = each_rack_free_gpus.index(min(each_rack_free_gpus))# max number of free gpus in each rack
+        # if len(np.where(self.resources == -1)[0])>k:
+        #     print(len(np.where(self.resources == -1)[0]),k)
 
-        if k!=1:     ##################### for jobs with 1 gpu request
+
+        for z in range(WIDTH):
+            each_rack_free_gpus.append(len(np.where(self.resources[z,:,:]==-1)[0]))# number of free gpus in rack 0 ... i
+            erf=np.array(each_rack_free_gpus)
+        
+        
+        # print('each_rack_free_gpus',each_rack_free_gpus)
+        maxfreerack = each_rack_free_gpus.index(max(each_rack_free_gpus))# max number of free gpus in each rack
+        # print(erf[np.where( erf==np.min(erf[np.nonzero(erf)]))])
+        if  np.max(erf) == np.min(erf) and np.max(erf) != 0:
+          minfreerack = each_rack_free_gpus.index(np.min(erf))
+        else:
+          minfreerack = each_rack_free_gpus.index(erf[np.where( erf==np.min(erf[np.nonzero(erf)]))])
+        # print('maxfreerack,minfreerack',maxfreerack,minfreerack)
+
+        if k!=1:     ##################### for jobs with more than 1 gpu request
             for f in range(DEPTH):
                 each_rack_free_machine.append(len(np.where(self.resources[maxfreerack,f,:]==-1)[0]))# number of free gpus in rack 0 ... i
             maxfreemachine = each_rack_free_machine.index(max(each_rack_free_machine))# max number of free gpus in each rack
             a = np.where(self.resources[maxfreerack,maxfreemachine,:]==-1)[0][0]# third dimension of a free GPU
-            x_=maxfreerack
-            y_=maxfreemachine
-            z_=a
-        
+            # resources[maxfreerack,maxfreemachine,a]=4444
+
+            x_ = maxfreerack
+            y_ = maxfreemachine
+            z_ = a
         
         else:
             for f in range(DEPTH):
                 each_rack_free_machine.append(len(np.where(self.resources[minfreerack,f,:]==-1)[0]))# number of free gpus in rack 0 ... i
-            minfreemachine = each_rack_free_machine.index(max(each_rack_free_machine))# max number of free gpus in each rack
+            # minfreemachine = each_rack_free_machine.index(max(each_rack_free_machine))# max number of free gpus in each rack
+            erfm = np.array(each_rack_free_machine)
+            minfreemachine = each_rack_free_machine.index(max(each_rack_free_machine))
             b = np.where(self.resources[minfreerack,minfreemachine,:]==-1)[0][0]# third dimension of a free GPU
-            x_=minfreerack
-            y_=minfreemachine
-            z_=b
-        
+            # print('minfreerack,minfreemachine,b',minfreerack,minfreemachine,b)
+            x_ = minfreerack
+            y_ = minfreemachine
+            z_ = b
+                # else:
+                #     x_ = int(self.get_avl_gpus()[0][:1])####find the first idle gpu as before(first dim)
+                #     y_ = int(self.get_avl_gpus()[1][:1])####find the first idle gpu as before(second dim)
+                #     z_ = int(self.get_avl_gpus()[2][:1])####find the first idle gpu as before(third dim)
+            
 
-         
-        
+            
 
         ####################################################### First empty GPU will be in resources[maxfreerack,maxfreemachine,a]
         
