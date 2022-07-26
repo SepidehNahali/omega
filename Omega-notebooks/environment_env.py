@@ -569,8 +569,8 @@ class Env(ABC):
 
             self.jobqueue[j_idx].status = 'running'
             self.jobqueue[j_idx].gpus = gpus
-            for ii in range(len(self.jobqueue)):
-                # print('Job Queue id, idx: ',self.jobqueue[ii].job_id,self.jobqueue[j_idx])
+            # for ii in range(len(self.jobqueue)):
+            #     print('Job Queue id, idx: ',self.jobqueue[ii].job_id,self.jobqueue[j_idx])
 
             return True
         return False
