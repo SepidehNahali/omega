@@ -57,7 +57,7 @@ def exp1(name):
     NUM_EPOCH= 100
     NUM_EPISODE = 100
     env = DQNTesting1(pa)
-    baselines = ['SJF', 'RANDOM']
+    baselines = ['SJF','LJF', 'RANDOM','TETRIS']
     
 
 
