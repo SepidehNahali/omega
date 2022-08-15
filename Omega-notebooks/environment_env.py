@@ -4,8 +4,6 @@ from pickletools import int4
 import numpy as np
 from scipy.interpolate import interp1d
 
-from env_components_topolgy import *
-
 from env_components_gpu import Gpu
 from env_components_parameters import Parameters
 from env_components_job import *
@@ -15,15 +13,6 @@ from environment_env_util import *
 from environment_env_util import choose_gpu_fn, gpu_assign_time_status_fn
 from typing import List, Deque
 from collections import deque
-from environment_simple_dqn_env import *
-########## Hossein ###########
-import pdb
-import random
-from matplotlib import pyplot as plt
-
-##############################
-
-################################################## I changed the get-avl-gpu usage in all methods with cluster number(*C-num)=0 to have one cluster. but it is not 
 
 ########## Hossein ###########
 import pdb
@@ -94,10 +83,11 @@ class Env(ABC):
         Get the index of paused jobs
     get_done_jobs()
         Get the index of finished jobs
-    get_first_k_gpus(k)
+    get_random_gpus(k)
         Get k random avalible gpus
 
     """
+
     def __init__(self, pa):
         """Constructor of the environment
 
@@ -109,12 +99,13 @@ class Env(ABC):
         self.done = False
 
         self.pa = pa
+
         # Host class, contains gpu
         self.resources = -np.ones((self.pa.num_racks_per_cluster, self.pa.num_machines_per_rack,
                                    self.pa.num_gpus_per_machine), dtype=np.int32)  # Hossein
         self.gpus_array = np.array([], dtype=Gpu)
         # self.resources[:] = -1 # Hossein
-        
+
         # self.jobqueue = [None] * self.pa.jobqueue_maxlen # Hossein
         # self.jobqueue = np.full(self.pa.jobqueue_maxlen, None, dtype=np.object) # Hossein
 
@@ -123,28 +114,18 @@ class Env(ABC):
 
         self.jobqueue_maxlen = pa.jobqueue_maxlen
         self.j_id = 0
-        self.last_job_id = 0
         self.total_step = 0
         self.num_job_finished = 0
 
-        self.datagenerator = DataGenerating(max_gpu_request=pa.max_gpu_request, max_len=pa.max_job_len,resources=self.resources,ret_reducer=pa.ret_reducer)
+        self.datagenerator = DataGenerating(max_gpu_request=pa.max_gpu_request, max_len=pa.max_job_len,
+                                            resources=self.resources,
+                                            ret_reducer=pa.ret_reducer)
         self.len_seq = np.array([])
         self.gpu_request_seq = np.array([])
         self.gpus_per_rack = self.resources.shape[1] * self.resources.shape[2]
         self.curr_time = 0
         self.episode_reward = np.array([])
-        self.topology_parameters = NetworkTopology()
-        # self.topology_parameters.node_index_build()
-        # self.topology_parameters.create_graph()
-        # self.topology_parameters.create_adjacency_matrix()
-        # self.topology_parameters.get_gpu_distance_from_all(1)
-        # self.topology_parameters.get_gpu_sort_nearest(2)
-        # print('here is env total gpu nymbers: ', topology_parameters.gpu_number)
-        # for cluster in topology_parameters.cluster_gpus:
-        #     print('cluster_gpus: ',cluster.gpu_id)
-        # print('im in environment class here is the parameters: ',topology_parameters.get_gpu_sort_nearest(6))
-        self.assigned_gpu_to_jobs = {}
-        
+
     def reset(self):
         """Reset the environment
 
@@ -156,15 +137,16 @@ class Env(ABC):
         self.resources = -np.ones((self.pa.num_racks_per_cluster, self.pa.num_machines_per_rack,
                                    self.pa.num_gpus_per_machine), dtype=np.int32)  # Hossein
 
-
         # self.jobqueue = np.full(self.pa.jobqueue_maxlen, None, dtype=np.object) # Hossein
 
         self.jobqueue = np.array([])
         self.backlog = deque(maxlen=self.pa.max_backlog_len)
+
         self.jobqueue_maxlen = self.pa.jobqueue_maxlen
         self.j_id = 0
         self.total_step = 0
         self.num_job_finished = 0
+
         self.datagenerator = DataGenerating(max_gpu_request=self.pa.max_gpu_request, max_len=self.pa.max_job_len,
                                             resources=self.resources,
                                             ret_reducer=self.pa.ret_reducer)
@@ -173,198 +155,6 @@ class Env(ABC):
         self.gpus_per_rack = self.resources.shape[1] * self.resources.shape[2]
         self.curr_time = 0
         self.episode_reward = np.array([])
-
-
-#         # print('resources: ',self.resources)
-#         skew1 = self.pa.job_len_skew
-#         skew2 = self.pa.gpu_requst_skew
-#         self.len_seq, self.gpu_request_seq = self.datagenerator.data_gen(50, skew1, skew2)
-
-#         d_ex, m, tt_m, d_fj_tflop, gradsize = self.datagenerator.dnn_data_gen(self.gpu_request_seq[self.j_id],
-#                                                                               self.len_seq[self.j_id])
-#         j = Job(id=self.j_id, gpu_request=3,len=self.len_seq[self.j_id], ts_0j=self.curr_time, d_exj_tlop=d_ex, tt_m=tt_m,m=m, d_fj_tflop=d_fj_tflop, gradsize=gradsize)
-#         self.jobqueue = np.append(self.jobqueue, j)
-#         j.gpus = ([0],[0],[0])
-#         j.status = 'running'
-#         self.resources[0, 0, 0] = self.j_id
-#         self.j_id += 1
-        
-        
-#         skew1 = self.pa.job_len_skew
-#         skew2 = self.pa.gpu_requst_skew
-#         self.len_seq, self.gpu_request_seq = self.datagenerator.data_gen(50, skew1, skew2)
-
-#         d_ex, m, tt_m, d_fj_tflop, gradsize = self.datagenerator.dnn_data_gen(self.gpu_request_seq[self.j_id],
-#                                                                               self.len_seq[self.j_id])
-#         j = Job(id=self.j_id, gpu_request=3,len=self.len_seq[self.j_id], ts_0j=self.curr_time, d_exj_tlop=d_ex, tt_m=tt_m,m=m, d_fj_tflop=d_fj_tflop, gradsize=gradsize)
-#         self.jobqueue = np.append(self.jobqueue, j)
-#         j.gpus = ([0],[1],[0])
-#         j.status = 'running'
-#         self.resources[0, 1, 0] = self.j_id
-#         self.j_id += 1
-
-        
-#         skew1 = self.pa.job_len_skew
-#         skew2 = self.pa.gpu_requst_skew
-#         self.len_seq, self.gpu_request_seq = self.datagenerator.data_gen(50, skew1, skew2)
-
-#         d_ex, m, tt_m, d_fj_tflop, gradsize = self.datagenerator.dnn_data_gen(self.gpu_request_seq[self.j_id],
-#                                                                               self.len_seq[self.j_id])
-#         j = Job(id=self.j_id, gpu_request=3,len=self.len_seq[self.j_id], ts_0j=self.curr_time, d_exj_tlop=d_ex, tt_m=tt_m,m=m, d_fj_tflop=d_fj_tflop, gradsize=gradsize)
-#         self.jobqueue = np.append(self.jobqueue, j)
-#         j.gpus = ([0],[2],[0])
-#         j.status = 'running'
-#         self.resources[0, 2, 0] = self.j_id
-#         self.j_id += 1
-
-
-#         skew1 = self.pa.job_len_skew
-#         skew2 = self.pa.gpu_requst_skew
-#         self.len_seq, self.gpu_request_seq = self.datagenerator.data_gen(50, skew1, skew2)
-
-
-#         d_ex, m, tt_m, d_fj_tflop, gradsize = self.datagenerator.dnn_data_gen(self.gpu_request_seq[self.j_id],
-#                                                                               self.len_seq[self.j_id])
-#         j = Job(id=self.j_id, gpu_request=3,len=self.len_seq[self.j_id], ts_0j=self.curr_time, d_exj_tlop=d_ex, tt_m=tt_m,m=m, d_fj_tflop=d_fj_tflop, gradsize=gradsize)
-#         self.jobqueue = np.append(self.jobqueue, j)
-#         j.gpus = ([0],[3],[0])
-#         j.status = 'running'
-#         self.resources[0, 3, 0] = self.j_id
-#         self.j_id += 1
-
-
-        
-#         skew1 = self.pa.job_len_skew
-#         skew2 = self.pa.gpu_requst_skew
-#         self.len_seq, self.gpu_request_seq = self.datagenerator.data_gen(50, skew1, skew2)
-
-#         d_ex, m, tt_m, d_fj_tflop, gradsize = self.datagenerator.dnn_data_gen(self.gpu_request_seq[self.j_id],
-#                                                                               self.len_seq[self.j_id])
-#         j = Job(id=self.j_id, gpu_request=3,len=self.len_seq[self.j_id], ts_0j=self.curr_time, d_exj_tlop=d_ex, tt_m=tt_m,m=m, d_fj_tflop=d_fj_tflop, gradsize=gradsize)
-#         self.jobqueue = np.append(self.jobqueue, j)
-#         j.gpus = ([0],[3],[2])
-#         j.status = 'running'
-#         self.resources[0, 3, 2] = self.j_id
-#         self.j_id += 1
-
-
-
-        
-#         skew1 = self.pa.job_len_skew
-#         skew2 = self.pa.gpu_requst_skew
-#         self.len_seq, self.gpu_request_seq = self.datagenerator.data_gen(50, skew1, skew2)
-
-#         d_ex, m, tt_m, d_fj_tflop, gradsize = self.datagenerator.dnn_data_gen(self.gpu_request_seq[self.j_id],
-#                                                                               self.len_seq[self.j_id])
-#         j = Job(id=self.j_id, gpu_request=3,len=self.len_seq[self.j_id], ts_0j=self.curr_time, d_exj_tlop=d_ex, tt_m=tt_m,m=m, d_fj_tflop=d_fj_tflop, gradsize=gradsize)
-#         self.jobqueue = np.append(self.jobqueue, j)
-#         j.gpus = ([0],[2],[3])
-#         j.status = 'running'
-#         self.resources[0, 2, 3] = self.j_id
-#         self.j_id += 1
-
-
-
-        
-#         skew1 = self.pa.job_len_skew
-#         skew2 = self.pa.gpu_requst_skew
-#         self.len_seq, self.gpu_request_seq = self.datagenerator.data_gen(50, skew1, skew2)
-
-#         d_ex, m, tt_m, d_fj_tflop, gradsize = self.datagenerator.dnn_data_gen(self.gpu_request_seq[self.j_id],
-#                                                                               self.len_seq[self.j_id])
-#         j = Job(id=self.j_id, gpu_request=3,len=self.len_seq[self.j_id], ts_0j=self.curr_time, d_exj_tlop=d_ex, tt_m=tt_m,m=m, d_fj_tflop=d_fj_tflop, gradsize=gradsize)
-#         self.jobqueue = np.append(self.jobqueue, j)
-#         j.gpus = ([1],[2],[3])
-#         j.status = 'running'
-#         self.resources[1, 2, 3] = self.j_id
-#         self.j_id += 1
-
-
-
-        
-#         skew1 = self.pa.job_len_skew
-#         skew2 = self.pa.gpu_requst_skew
-#         self.len_seq, self.gpu_request_seq = self.datagenerator.data_gen(50, skew1, skew2)
-
-#         d_ex, m, tt_m, d_fj_tflop, gradsize = self.datagenerator.dnn_data_gen(self.gpu_request_seq[self.j_id],
-#                                                                               self.len_seq[self.j_id])
-#         j = Job(id=self.j_id, gpu_request=3,len=self.len_seq[self.j_id], ts_0j=self.curr_time, d_exj_tlop=d_ex, tt_m=tt_m,m=m, d_fj_tflop=d_fj_tflop, gradsize=gradsize)
-#         self.jobqueue = np.append(self.jobqueue, j)
-#         j.gpus = ([1],[3],[3])
-#         j.status = 'running'
-#         self.resources[1, 3, 3] = self.j_id
-#         self.j_id += 1
-
-
-
-        
-#         skew1 = self.pa.job_len_skew
-#         skew2 = self.pa.gpu_requst_skew
-#         self.len_seq, self.gpu_request_seq = self.datagenerator.data_gen(50, skew1, skew2)
-
-#         d_ex, m, tt_m, d_fj_tflop, gradsize = self.datagenerator.dnn_data_gen(self.gpu_request_seq[self.j_id],
-#                                                                               self.len_seq[self.j_id])
-#         j = Job(id=self.j_id, gpu_request=3,len=self.len_seq[self.j_id], ts_0j=self.curr_time, d_exj_tlop=d_ex, tt_m=tt_m,m=m, d_fj_tflop=d_fj_tflop, gradsize=gradsize)
-#         self.jobqueue = np.append(self.jobqueue, j)
-#         j.gpus = ([0],[2],[2])
-#         j.status = 'running'
-#         self.resources[0, 2, 2] = self.j_id
-#         self.j_id += 1
-
-
-
-        
-#         skew1 = self.pa.job_len_skew
-#         skew2 = self.pa.gpu_requst_skew
-#         self.len_seq, self.gpu_request_seq = self.datagenerator.data_gen(50, skew1, skew2)
-
-#         d_ex, m, tt_m, d_fj_tflop, gradsize = self.datagenerator.dnn_data_gen(self.gpu_request_seq[self.j_id],
-#                                                                               self.len_seq[self.j_id])
-#         j = Job(id=self.j_id, gpu_request=3,len=self.len_seq[self.j_id], ts_0j=self.curr_time, d_exj_tlop=d_ex, tt_m=tt_m,m=m, d_fj_tflop=d_fj_tflop, gradsize=gradsize)
-#         self.jobqueue = np.append(self.jobqueue, j)
-#         j.gpus = ([1],[2],[2])
-#         j.status = 'running'
-#         self.resources[1, 2, 2] = self.j_id
-#         self.j_id += 1
-
-
-
-        
-#         skew1 = self.pa.job_len_skew
-#         skew2 = self.pa.gpu_requst_skew
-#         self.len_seq, self.gpu_request_seq = self.datagenerator.data_gen(50, skew1, skew2)
-
-#         d_ex, m, tt_m, d_fj_tflop, gradsize = self.datagenerator.dnn_data_gen(self.gpu_request_seq[self.j_id],
-#                                                                               self.len_seq[self.j_id])
-#         j = Job(id=self.j_id, gpu_request=3,len=self.len_seq[self.j_id], ts_0j=self.curr_time, d_exj_tlop=d_ex, tt_m=tt_m,m=m, d_fj_tflop=d_fj_tflop, gradsize=gradsize)
-#         self.jobqueue = np.append(self.jobqueue, j)
-#         j.gpus = ([1],[2],[1])
-#         j.status = 'running'
-#         self.resources[1, 2, 1] = self.j_id
-#         self.j_id += 1
-
-
-
-        
-#         skew1 = self.pa.job_len_skew
-#         skew2 = self.pa.gpu_requst_skew
-#         self.len_seq, self.gpu_request_seq = self.datagenerator.data_gen(50, skew1, skew2)
-
-#         d_ex, m, tt_m, d_fj_tflop, gradsize = self.datagenerator.dnn_data_gen(self.gpu_request_seq[self.j_id],
-#                                                                               self.len_seq[self.j_id])
-#         j = Job(id=self.j_id, gpu_request=3,len=self.len_seq[self.j_id], ts_0j=self.curr_time, d_exj_tlop=d_ex, tt_m=tt_m,m=m, d_fj_tflop=d_fj_tflop, gradsize=gradsize)
-#         self.jobqueue = np.append(self.jobqueue, j)
-#         j.gpus = ([1],[2],[0])
-#         j.status = 'running'
-#         self.resources[1, 2, 0] = self.j_id
-#         self.j_id += 1
-
-
-
-
-
-        print('resources: ',self.resources)
-        
         return self.observe()
 
     @abstractmethod
@@ -454,7 +244,7 @@ class Env(ABC):
 
         return self.gpus_array, jobs_waiting_array, adj_matrix
 
-    def generate_job_sequence(self, size: int):
+    def generate_job_sequence(self, size: int, skew1: float = 0.0, skew2: float = 0.0):
 
         """Function calls the datagenerating function in data_generator class
 
@@ -473,8 +263,6 @@ class Env(ABC):
         -------
         A list of job len and gpu request
         """
-        skew1 = self.pa.job_len_skew
-        skew2 = self.pa.gpu_requst_skew
         self.len_seq, self.gpu_request_seq = self.datagenerator.data_gen(size, skew1, skew2)
 
     def insert_new_job(self):
@@ -488,8 +276,7 @@ class Env(ABC):
             if len(self.backlog) > 0:
                 self.jobqueue = np.append(self.jobqueue, self.backlog.popleft())
             elif (self.num_job_finished + len(self.jobqueue) + len(self.backlog)) < self.pa.target_num_job_arrive:
-                d_ex, m, tt_m, d_fj_tflop, gradsize = self.datagenerator.dnn_data_gen(self.gpu_request_seq[self.j_id],
-                                                                                      self.len_seq[self.j_id])
+                d_ex, m, tt_m, d_fj_tflop, gradsize = self.datagenerator.dnn_data_gen(self.gpu_request_seq[self.j_id])
                 j = Job(id=self.j_id, gpu_request=self.gpu_request_seq[self.j_id],
                         len=self.len_seq[self.j_id], ts_0j=self.curr_time, d_exj_tlop=d_ex, tt_m=tt_m,
                         m=m, d_fj_tflop=d_fj_tflop, gradsize=gradsize)
@@ -499,8 +286,7 @@ class Env(ABC):
                 return False
         elif len(self.backlog) < self.pa.max_backlog_len and \
                 (self.num_job_finished + len(self.jobqueue) + len(self.backlog)) < self.pa.target_num_job_arrive:
-            d_ex, m, tt_m, d_fj_tflop, gradsize = self.datagenerator.dnn_data_gen(self.gpu_request_seq[self.j_id],
-                                                                                  self.len_seq[self.j_id])
+            d_ex, m, tt_m, d_fj_tflop, gradsize = self.datagenerator.dnn_data_gen(self.gpu_request_seq[self.j_id])
             j = Job(id=self.j_id, gpu_request=self.gpu_request_seq[self.j_id],
                     len=self.len_seq[self.j_id], ts_0j=self.curr_time, d_exj_tlop=d_ex, tt_m=tt_m,
                     m=m, d_fj_tflop=d_fj_tflop, gradsize=gradsize)
@@ -525,13 +311,12 @@ class Env(ABC):
         run_jobs = self.get_running_jobs()
         for j in self.jobqueue[run_jobs]:
             j.forward_one_step()
-        for job in self.jobqueue[self.get_waiting_jobs()]:
-            job.waiting_time += 1
 
     def advance_runningjobs_onestep(self):
         gpus_per_rack = self.resources.shape[1] * self.resources.shape[2]
         for job in self.jobqueue[self.get_running_jobs()]:
-            job.v_m, job.rt_m = calc_job_minbatch_speed(job, gpus_per_rack, self.pa.ret_reducer, singleormulti='multi',outdetails=True)
+            job.v_m, job.rt_m = calc_job_minbatch_speed(job, gpus_per_rack, self.pa.ret_reducer, singleormulti='multi',
+                                                        outdetails=True)
             d_delta = self.datagenerator.jobadvancecompdist(job)
             job.d_done += d_delta
             job.stepcounter += 1
@@ -565,19 +350,12 @@ class Env(ABC):
         """
         if all(x == -1 for x in self.resources[gpus]):
             self.resources[gpus] = self.jobqueue[j_idx].job_id
-            print('job ',self.jobqueue[j_idx].job_id,' Just assigend  cordination: ',gpus )
-
             self.jobqueue[j_idx].status = 'running'
             self.jobqueue[j_idx].gpus = gpus
-            # for ii in range(len(self.jobqueue)):
-            #     print('Job Queue id, idx: ',self.jobqueue[ii].job_id, ii)
-
             return True
         return False
 
     def random_select_k_gpus_for_job(self, j):
-        # print('This is random_select_k_gpus_for_job: ')
-
         """Randomly select k gpus for the target job j
 
         Parameters
@@ -590,31 +368,16 @@ class Env(ABC):
         selected gpus : (ndarray, ndarray)
             A set of selected gpus
         """
-   
         if j < len(self.jobqueue):
             gpu_request = self.jobqueue[j].gpu_request
             avl_gpus = self.get_avl_gpus()
-            # print('avl_gpus[0]),len(avl_gpus[0]),gpu_request',avl_gpus[0],len(avl_gpus[0]),gpu_request)
             if len(avl_gpus[0]) >= 1 and len(avl_gpus[0]) >= gpu_request:
-               
-                # print('self.get_random_gpus(gpu_request): ',gpu_request,self.get_first_k_gpus(gpu_request))
-                # print('1- random_select_k_gpus_for_job: ',j ,len(self.jobqueue),avl_gpus[0],len(avl_gpus[0]))
-                return self.get_first_k_gpus(gpu_request)
-
+                return self.get_random_gpus(gpu_request)
             else:
-                # print('2- random_select_k_gpus_for_job: ',j ,len(self.jobqueue),avl_gpus[0],len(avl_gpus[0]))
-                # print('self.resources ',self.resources)
-
-                # return ([], [], [], [], [])
-                return ([], [], [])
-
+                return ([], [], [], [], [])
         else:
-            # return ([], [], [], [], [])
-            print('3- random_select_k_gpus_for_job: ',j ,len(self.jobqueue),avl_gpus[0],len(avl_gpus[0]))
+            return ([], [], [], [], [])
 
-            return ([], [], [])
-
-   
     def get_avl_gpus(self, *c_idx):
         """Find all available gpus in the environment
 
@@ -690,156 +453,13 @@ class Env(ABC):
         """
 
         def getter(j):
-            # print('total computational distance of the job: ',j.job_id,' is equal to: ', j.d_f)
-            # print('and','j.d_done is: ',j.d_done )
-            return j.d_done >= j.d_f
+            return j.d_done > j.d_f
 
         vfunc = np.vectorize(getter, otypes=[bool])
-        # print('done jobs vfunc: ',vfunc )
-
         done_jobs = np.where(vfunc(self.jobqueue))
-
-        # print('done jobs: ',done_jobs)
-        # print('self.resources : ',self.resources)
-        # print('done jobs len: ',len(done_jobs))
-
-
-        # print('done_jobs[0],done_jobs[1],done_jobs[2] : ',done_jobs[0],done_jobs[1],done_jobs[2])
-
-
         return done_jobs
-    
-    def update_resources(self):
-        for j_idx in range(len(self.jobqueue)):
-            gpus = self.jobqueue[j_idx].gpus
-            if gpus:
-                self.resources[gpus] = j_idx
 
-    # def get_first_k_gpus(self, k: int, random: bool=False) -> tuple:
-    #     """Get random k available gpus
-
-    #     Parametersgit
-    #     ---------
-    #     k : int
-    #         The number of gpus that would like to pick up.
-
-    #     Returns
-    #     -------
-    #     gpus : tuple
-    #         A tuple represents the coordinates of selected gpus.git status
-    #     """
-
-    #     # print('This is get_random_gpus: ')
-
-    #     """Get random k available gpus
-
-    #     Parametersgit
-    #     ---------
-    #     k : int
-    #         The number of gpus that would like to pick up.
-
-    #     Returns
-    #     -------
-    #     gpus : tuple
-    #         A tuple represents the coordinates of selected gpus.git status
-    #     """
-
-    #     def get_kth_dims(idx,zMax,xMax,yMax):#returns the Kth element dimentions in the 3-darray of self.resources
-    #             assert(idx<zMax*xMax*yMax)
-    #             z = int(idx / (xMax * yMax))
-    #             idx -= (z * xMax * yMax);
-    #             y = int(idx / xMax)
-    #             x = int(idx % xMax)
-    #             return  z,y,x 
-    #     first_avl_gpus = self.get_avl_gpus()
-
-    #     # x_ = int(self.get_avl_gpus()[0][:1])####find the first idle gpu as before(first dim)
-    #     # y_ = int(self.get_avl_gpus()[1][:1])####find the first idle gpu as before(second dim)
-    #     # z_ = int(self.get_avl_gpus()[2][:1])####find the first idle gpu as before(third dim)
-    
-    #     WIDTH = self.pa.num_racks_per_cluster # 2
-    #     DEPTH = self.pa.num_machines_per_rack # 4
-    #     HEIGHT = self.pa.num_gpus_per_machine # 4
-        
-        
-    #     each_rack_free_gpus = []
-    #     each_rack_free_machine = []
-    #     most_epmpty_rack = 0
-        
-    #     # if len(np.where(self.resources == -1)[0])>k:
-    #     #     print(len(np.where(self.resources == -1)[0]),k)
-
-
-    #     for z in range(WIDTH):
-    #         each_rack_free_gpus.append(len(np.where(self.resources[z,:,:]==-1)[0]))# number of free gpus in rack 0 ... i
-    #         erf=np.array(each_rack_free_gpus)
-        
-        
-    #     # print('each_rack_free_gpus',each_rack_free_gpus)
-    #     maxfreerack = each_rack_free_gpus.index(max(each_rack_free_gpus))# max number of free gpus in each rack
-    #     # print(erf[np.where( erf==np.min(erf[np.nonzero(erf)]))])
-    #     if  np.max(erf) == np.min(erf) and np.max(erf) != 0:
-    #       minfreerack = each_rack_free_gpus.index(np.min(erf))
-    #     else:
-    #       minfreerack = each_rack_free_gpus.index(erf[np.where( erf==np.min(erf[np.nonzero(erf)]))])
-    #     # print('maxfreerack,minfreerack',maxfreerack,minfreerack)
-
-    #     if k!=1:     ##################### for jobs with more than 1 gpu request
-    #         for f in range(DEPTH):
-    #             each_rack_free_machine.append(len(np.where(self.resources[maxfreerack,f,:]==-1)[0]))# number of free gpus in rack 0 ... i
-    #         maxfreemachine = each_rack_free_machine.index(max(each_rack_free_machine))# max number of free gpus in each rack
-    #         a = np.where(self.resources[maxfreerack,maxfreemachine,:]==-1)[0][0]# third dimension of a free GPU
-    #         # resources[maxfreerack,maxfreemachine,a]=4444
-
-    #         x_ = maxfreerack
-    #         y_ = maxfreemachine
-    #         z_ = a
-        
-    #     else:
-    #         for f in range(DEPTH):
-    #             each_rack_free_machine.append(len(np.where(self.resources[minfreerack,f,:]==-1)[0]))# number of free gpus in rack 0 ... i
-    #         # minfreemachine = each_rack_free_machine.index(max(each_rack_free_machine))# max number of free gpus in each rack
-    #         erfm = np.array(each_rack_free_machine)
-    #         minfreemachine = each_rack_free_machine.index(max(each_rack_free_machine))
-    #         b = np.where(self.resources[minfreerack,minfreemachine,:]==-1)[0][0]# third dimension of a free GPU
-    #         # print('minfreerack,minfreemachine,b',minfreerack,minfreemachine,b)
-    #         x_ = minfreerack
-    #         y_ = minfreemachine
-    #         z_ = b
-    #             # else:
-    #             #     x_ = int(self.get_avl_gpus()[0][:1])####find the first idle gpu as before(first dim)
-    #             #     y_ = int(self.get_avl_gpus()[1][:1])####find the first idle gpu as before(second dim)
-    #             #     z_ = int(self.get_avl_gpus()[2][:1])####find the first idle gpu as before(third dim)
-            
-
-            
-
-    #     ####################################################### First empty GPU will be in resources[maxfreerack,maxfreemachine,a]
-        
-        
-    #     first_gpu_Id = x_ * HEIGHT * DEPTH + y_ * DEPTH + z_# get the first gpu number dims found randomly in(x,y,z)
-    #     get_nearest = self.topology_parameters.get_gpu_sort_nearest(first_gpu_Id)#search nearest gpus to it
-        
-    #     x0 = np.where(self.resources == -1)[0][:0]# create three empty array to put the nearest gpu dims in them
-    #     x1 = np.where(self.resources == -1)[1][:0]
-    #     x2 = np.where(self.resources == -1)[2][:0]#(by appending will be extended to (k,) or np.where(self.resources == -1)[2][:k])
-
-    #     idleneighbour=0
-    #     for i in range(len(get_nearest)-1):# for each neighbor gpu ID:[3,34,2,5],len=3,i=1,4
-    #         x,y,z= get_kth_dims(get_nearest[i],WIDTH,DEPTH,HEIGHT)# tell the dims in resources matrice
-    #         if (self.resources[x][y][z]==-1): # to make sure that the neighbouring GPUs are idle
-    #             idleneighbour=idleneighbour+1
-    #             if (idleneighbour>k):#find the rest k-1 gpus from the sorted list
-    #                 # print('get_kth_dims:    ',get_kth_dims)
-    #                 break
-    #             x0=np.append(x0,x)# append the  to x0 which contains the k nearest gpus first dims
-    #             x1=np.append(x1,y)# append the  to x0 which contains the k nearest gpus second dims
-    #             x2=np.append(x2,z)# append the  to x0 which contains the k nearest gpus third dims
-    #     # print('first_gpu_Id:',first_gpu_Id,'get_nearest: ',get_nearest)
-
-    #     return (x0, x1, x2)# before x0=np.where(self.resources == -1)[0][:k],...  had the first k gpus in resources marice. now it has nearest k gpus in terms of topology
-
-    def get_first_k_gpus(self, k: int, random: bool=False) -> tuple:
+    def get_random_gpus(self, k: int) -> tuple:
         """Get random k available gpus
 
         Parametersgit
@@ -852,212 +472,21 @@ class Env(ABC):
         gpus : tuple
             A tuple represents the coordinates of selected gpus.git status
         """
+        x0 = self.get_avl_gpus()[0][:k]
+        x1 = self.get_avl_gpus()[1][:k]
+        x2 = self.get_avl_gpus()[2][:k]
 
-        # print('This is get_random_gpus: ')
-
-        """Get random k available gpus
-
-        Parametersgit
-        ---------
-        k : int
-            The number of gpus that would like to pick up.
-
-        Returns
-        -------
-        gpus : tuple
-            A tuple represents the coordinates of selected gpus.git status
-        """
-
-        def get_kth_dims(idx,zMax,xMax,yMax):#returns the Kth element dimentions in the 3-darray of self.resources
-                assert(idx<zMax*xMax*yMax)
-                z = int(idx / (xMax * yMax))
-                idx -= (z * xMax * yMax);
-                y = int(idx / xMax)
-                x = int(idx % xMax)
-                return  z,y,x 
-        first_avl_gpus = self.get_avl_gpus()
-
-        # x_ = int(self.get_avl_gpus()[0][:1])####find the first idle gpu as before(first dim)
-        # y_ = int(self.get_avl_gpus()[1][:1])####find the first idle gpu as before(second dim)
-        # z_ = int(self.get_avl_gpus()[2][:1])####find the first idle gpu as before(third dim)
-    
-        WIDTH = self.pa.num_racks_per_cluster # 2
-        DEPTH = self.pa.num_machines_per_rack # 4
-        HEIGHT = self.pa.num_gpus_per_machine # 4
-        
-        
-        each_rack_free_gpus = []
-        each_rack_free_machine = []
-        each_rack_free_machine_k = []
-        most_epmpty_rack = 0
-        
-        # if len(np.where(self.resources == -1)[0])>k:
-        #     print(len(np.where(self.resources == -1)[0]),k)
-
-
-        for z in range(WIDTH):
-            each_rack_free_gpus.append(len(np.where(self.resources[z,:,:]==-1)[0]))# number of free gpus in rack 0 ... i
-            erf=np.array(each_rack_free_gpus)
-        
-        
-        # print('each_rack_free_gpus',each_rack_free_gpus)
-        maxfreerack = each_rack_free_gpus.index(max(each_rack_free_gpus))# max number of free gpus in each rack
-        # print(erf[np.where( erf==np.min(erf[np.nonzero(erf)]))])
-        if  np.max(erf) == np.min(erf) and np.max(erf) != 0:
-          minfreerack = each_rack_free_gpus.index(min(erf))
-        else:
-          minfreerack = each_rack_free_gpus.index(erf[np.where( erf==np.min(erf[np.nonzero(erf)]))])
-        # print('maxfreerack,minfreerack',maxfreerack,minfreerack)
-        if k>4:     ##################### for jobs with more than 4 gpu request
-            for f in range(DEPTH):
-                each_rack_free_machine.append(len(np.where(self.resources[maxfreerack,f,:]==-1)[0]))# number of free gpus in rack 0 ... i
-            # print(each_rack_free_machine)
-            maxfreemachine = each_rack_free_machine.index(max(each_rack_free_machine))# max number of free gpus in each rack
-            # print('k>4',each_rack_free_machine)
-            # print('maxfreemachine',maxfreemachine)
-            a = np.where(self.resources[maxfreerack,maxfreemachine,:]==-1)[0][0]# third dimension of a free GPU
-            # print(maxfreerack,maxfreemachine,a)
-            # resources[maxfreerack,maxfreemachine,a]=4444
-
-            x_ = maxfreerack
-            y_ = maxfreemachine
-            z_ = a
-        elif k>1:     ##################### for jobs with more than 1 and less than 4 gpu request
-            for f in range(DEPTH):
-                each_rack_free_machine.append(len(np.where(self.resources[minfreerack,f,:]==-1)[0]))# number of free gpus in rack 0 ... i
-                if (len(np.where(self.resources[minfreerack,f,:]==-1)[0])>=k):
-                    each_rack_free_machine_k.append(len(np.where(self.resources[minfreerack,f,:]==-1)[0]))# number of free k gpus in rack 0 ... i
-                    rack=minfreerack
-            if not(each_rack_free_machine_k):
-                each_rack_free_machine=[]
-                for f in range(DEPTH):
-                    each_rack_free_machine.append(len(np.where(self.resources[maxfreerack,f,:]==-1)[0]))# number of free gpus in rack 0 ... i
-                    if len(np.where(self.resources[maxfreerack,f,:]==-1)[0])>=k:
-                        each_rack_free_machine_k.append(len(np.where(self.resources[maxfreerack,f,:]==-1)[0]))# number of free k gpus in rack 0 ... i
-                        rack=maxfreerack
-            # print('k>1, each_rack_free_machine',each_rack_free_machine)
-            # print('each_rack_free_machine_k',each_rack_free_machine_k)
-            # maxfreemachine = each_rack_free_machine.index(max(each_rack_free_machine))# max number of free gpus in each rack
-            if each_rack_free_machine_k:
-                # print('k>1',each_rack_free_machine)
-                # print(each_rack_free_machine_k)
-                exactfreemachine = each_rack_free_machine.index(min(each_rack_free_machine_k))# max number of free gpus in each rack
-                # c=(each_rack_free_machine.index(min(each_rack_free_machine_k)))%4
-                print('exactfreemachine', exactfreemachine)
-                c = np.where(self.resources[rack,exactfreemachine,:]==-1)[0][0]# third dimension of a free GPU
-                x_ = rack
-                y_ = exactfreemachine
-                z_ = c
-            else: 
-                maxfreemachine = each_rack_free_machine.index(max(each_rack_free_machine))# max number of free gpus in each rack
-                c = np.where(self.resources[maxfreerack,maxfreemachine,:]==-1)[0][0]# third dimension of a free GPU
-                x_ = maxfreerack
-                y_ = maxfreemachine
-                z_ = c
-                # print('rack, exactfreemachine, c',rack,exactfreemachine,c)
-                # # resources[maxfreerack,maxfreemachine,a]=4444
-
-            
-        else:
-            for f in range(DEPTH):
-                each_rack_free_machine.append(len(np.where(self.resources[minfreerack,f,:]==-1)[0]))# number of free gpus in rack 0 ... i
-            # minfreemachine = each_rack_free_machine.index(max(each_rack_free_machine))# max number of free gpus in each rack
-            erfm = np.array(each_rack_free_machine)
-            minfreemachine = each_rack_free_machine.index(max(each_rack_free_machine))
-            b = np.where(self.resources[minfreerack,minfreemachine,:]==-1)[0][0]# third dimension of a free GPU
-            # print('minfreerack,minfreemachine,b',minfreerack,minfreemachine,b)
-            x_ = minfreerack
-            y_ = minfreemachine
-            z_ = b
-                # else:
-                #     x_ = int(self.get_avl_gpus()[0][:1])####find the first idle gpu as before(first dim)
-                #     y_ = int(self.get_avl_gpus()[1][:1])####find the first idle gpu as before(second dim)
-                #     z_ = int(self.get_avl_gpus()[2][:1])####find the first idle gpu as before(third dim)
-            
-
-            
-
-        ####################################################### First empty GPU will be in resources[maxfreerack,maxfreemachine,a]
-        
-        
-        first_gpu_Id = x_ * HEIGHT * DEPTH + y_ * DEPTH + z_# get the first gpu number dims found randomly in(x,y,z)
-        get_nearest = self.topology_parameters.get_gpu_sort_nearest(first_gpu_Id)#search nearest gpus to it
-        
-        x0 = np.where(self.resources == -1)[0][:0]# create three empty array to put the nearest gpu dims in them
-        x1 = np.where(self.resources == -1)[1][:0]
-        x2 = np.where(self.resources == -1)[2][:0]#(by appending will be extended to (k,) or np.where(self.resources == -1)[2][:k])
-
-        idleneighbour=0
-        for i in range(len(get_nearest)-1):# for each neighbor gpu ID:[3,34,2,5],len=3,i=1,4
-            x,y,z= get_kth_dims(get_nearest[i],WIDTH,DEPTH,HEIGHT)# tell the dims in resources matrice
-            if (self.resources[x][y][z]==-1): # to make sure that the neighbouring GPUs are idle
-                idleneighbour=idleneighbour+1
-                if (idleneighbour>k):#find the rest k-1 gpus from the sorted list
-                    # print('get_kth_dims:    ',get_kth_dims)
-                    break
-                x0=np.append(x0,x)# append the  to x0 which contains the k nearest gpus first dims
-                x1=np.append(x1,y)# append the  to x0 which contains the k nearest gpus second dims
-                x2=np.append(x2,z)# append the  to x0 which contains the k nearest gpus third dims
-        # print('first_gpu_Id:',first_gpu_Id,'get_nearest: ',get_nearest)
-
-        return (x0, x1, x2)# before x0=np.where(self.resources == -1)[0][:k],...  had the first k gpus in resources marice. now it has nearest k gpus in terms of topology
+        return (x0, x1, x2)
 
     def reward_throughput(self):
-        def _log(x):
-            if x <= 0:
-               return 0.01
-            else:
-                return x
-        total_waiting = 0
         reward = 0
-        # print('here is env, reward funcion the job is :',self.joboo,' the gpus are: ',self.gpuu,' the gpus type: ',type(self.gpuu))
-        # print('here is env, reward funcion availible gpus :',self.get_avl_gpus())
-        # print('here is env, reward funcion all resources :',self.resources)
-        # print('here is env, reward funcion resources of cluster:',clus,' : ',self.resources[np.array(clus)])
-        # print('self.assigned_gpu_to_jobs: ',get_assigned_gpu_job_dict())
-        distancefromothers=0
-        topology_parameters = self.topology_parameters
-
-        # for j in self.jobqueue[self.get_running_jobs()]:
-        #     # print('im in reward loop, running job is: ',j.job_id)
-        #     for gp in j.gpus:
-        #         # print('list of gpus of the job: ',gp)
-        #         if(len(gp)>1):
-        #             # print('length of gpu array: ',len(gp))
-        #             nearest = topology_parameters.get_gpu_sort_nearest(gp[0]) #containing the first node itself
-        #             a=gp.tolist() # we could use (==).all in if statement compariation for np array too
-        #             a.sort()
-        #             b=nearest[:len(gp)].tolist()
-        #             b.sort() # index is because selecting first n of needed gpus from nearest gpus list
-        #             # topology_parameters.get_gpu_sort_nearest(gp[0])
-        #             for i in gp:
-        #                 distancefromothers += topology_parameters.get_gpu_distance_gpu(gp[0],i)
-        #             if(a==b): # sort nearest gpus to the first gpu and selected gpus to compare if they are optimal
-        #                 reward *= distancefromothers
-        #             else:
-        #                 reward /= distancefromothers
-                   
-
-
         for j in self.jobqueue[self.get_running_jobs()]:
             reward += j.v_m
             if len(j.gpus[0]) != j.gpu_request:
                 reward += penalty_assigned_gpus(job=j, gpus_per_rack=self.gpus_per_rack, ret_reducer=self.pa.ret_reducer) * self.pa.delay_penalty
-            # if j.stepcounter == 0:
-            #     reward += j.job_len * j.gpu_request
         for j in self.jobqueue[self.get_waiting_jobs()]:
             reward += calc_job_minbatch_speed(job=j, gpus_per_rack=self.gpus_per_rack, ret_reducer=self.pa.ret_reducer, singleormulti='single') * self.pa.hold_penalty
-
         for j in self.backlog:
             reward += calc_job_minbatch_speed(job=j, gpus_per_rack=self.gpus_per_rack, ret_reducer=self.pa.ret_reducer, singleormulti='single') * self.pa.dismiss_penalty
-        
-        
-        reward*=(self.pa.num_racks_per_cluster*self.pa.num_machines_per_rack*self.pa.num_gpus_per_machine)-len(np.where(self.resources == -1)[0])
-#         reward = np.clip(reward, -300, 100)
-
-        
         return reward
-
-
-
 
