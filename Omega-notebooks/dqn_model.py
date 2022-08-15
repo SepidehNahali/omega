@@ -503,51 +503,51 @@ def prin():
 
 
 ################################################################ CNN+LSTM #####################################################################
-class Dueling_DQN(nn.Module):
+# class Dueling_DQN(nn.Module):
 
-    def __init__(self, input_dim, output_dim):
-        super(Dueling_DQN, self).__init__()
-        self.input_dim = input_dim
-        self.output_dim = output_dim
+#     def __init__(self, input_dim, output_dim):
+#         super(Dueling_DQN, self).__init__()
+#         self.input_dim = input_dim
+#         self.output_dim = output_dim
 
 
-        self.conv = nn.Sequential(
-            nn.Conv2d(input_dim[2], 32, kernel_size=3, stride=2),
-            nn.ReLU(),
-            nn.Conv2d(32, 64, kernel_size=2, stride=2),
-            nn.ReLU(),
-            nn.Conv2d(64, 64, kernel_size=2, stride=2),
-            nn.ReLU()
-        )
-        self.fc_input_dim = self.feature_size()
-        
-        self.value_stream = nn.LSTM(self.fc_input_dim, 512)
-
-#         self.value_stream = nn.Sequential(
-#             nn.Linear(self.fc_input_dim, 512),
+#         self.conv = nn.Sequential(
+#             nn.Conv2d(input_dim[2], 32, kernel_size=3, stride=2),
 #             nn.ReLU(),
-#             nn.Linear(512, 1)
+#             nn.Conv2d(32, 64, kernel_size=2, stride=2),
+#             nn.ReLU(),
+#             nn.Conv2d(64, 64, kernel_size=2, stride=2),
+#             nn.ReLU()
+#         )
+#         self.fc_input_dim = self.feature_size()
+        
+#         self.value_stream = nn.LSTM(self.fc_input_dim, 512)
+
+# #         self.value_stream = nn.Sequential(
+# #             nn.Linear(self.fc_input_dim, 512),
+# #             nn.ReLU(),
+# #             nn.Linear(512, 1)
+# #         )
+
+#         self.advantage_stream = nn.Sequential(
+            
+#             nn.Linear(512, self.output_dim)
 #         )
 
-        self.advantage_stream = nn.Sequential(
-            
-            nn.Linear(512, self.output_dim)
-        )
-
-    def forward(self, state):
-#         print('state.size()',state.size())
-        features = self.conv(state)
-        features = features.view(features.size(0), -1)
-        values,_ = self.value_stream(features)
-        advantages = self.advantage_stream(values)
+#     def forward(self, state):
+# #         print('state.size()',state.size())
+#         features = self.conv(state)
+#         features = features.view(features.size(0), -1)
+#         values,_ = self.value_stream(features)
+#         advantages = self.advantage_stream(values)
         
-#         print('values.size(),advantages.size,advantages.mean():',values.size(),advantages.size(),advantages.mean())
-        qvals = (advantages - advantages.mean())
+# #         print('values.size(),advantages.size,advantages.mean():',values.size(),advantages.size(),advantages.mean())
+#         qvals = (advantages - advantages.mean())
 
-        return qvals
+#         return qvals
 
-    def feature_size(self):
-        return self.conv(torch.autograd.Variable(torch.zeros([self.input_dim[2], self.input_dim[0], self.input_dim[1]]))).view(1, -1).size(1)
+#     def feature_size(self):
+#         return self.conv(torch.autograd.Variable(torch.zeros([self.input_dim[2], self.input_dim[0], self.input_dim[1]]))).view(1, -1).size(1)
 
 
 
@@ -560,45 +560,45 @@ import torch
 import torch.nn as nn
 import numpy as np
 
-# class Dueling_DQN(nn.Module):
+class Dueling_DQN(nn.Module):
  
-#     def __init__(self, input_dim, output_dim):
-#         super(Dueling_DQN, self).__init__()
-#         self.input_dim = input_dim
-#         self.output_dim = output_dim
+    def __init__(self, input_dim, output_dim):
+        super(Dueling_DQN, self).__init__()
+        self.input_dim = input_dim
+        self.output_dim = output_dim
 
-#         self.conv = nn.Sequential(
-#             nn.Conv2d(input_dim[2], 32, kernel_size=3, stride=2),
-#             nn.ReLU(),
-#             nn.Conv2d(32, 64, kernel_size=2, stride=2),
-#             nn.ReLU(),
-#             nn.Conv2d(64, 64, kernel_size=2, stride=2),
-#             nn.ReLU()
-#         )
-#         self.fc_input_dim = self.feature_size()
-#         self.value_stream = nn.Sequential(
-#             nn.Linear(self.fc_input_dim, 512),
-#             nn.ReLU(),
-#             nn.Linear(512, 1)
-#         )
+        self.conv = nn.Sequential(
+            nn.Conv2d(input_dim[2], 32, kernel_size=3, stride=2),
+            nn.ReLU(),
+            nn.Conv2d(32, 64, kernel_size=2, stride=2),
+            nn.ReLU(),
+            nn.Conv2d(64, 64, kernel_size=2, stride=2),
+            nn.ReLU()
+        )
+        self.fc_input_dim = self.feature_size()
+        self.value_stream = nn.Sequential(
+            nn.Linear(self.fc_input_dim, 512),
+            nn.ReLU(),
+            nn.Linear(512, 1)
+        )
 
-#         self.advantage_stream = nn.Sequential(
-#             nn.Linear(self.fc_input_dim, 512),
-#             nn.ReLU(),
-#             nn.Linear(512, self.output_dim)
-#         )
+        self.advantage_stream = nn.Sequential(
+            nn.Linear(self.fc_input_dim, 512),
+            nn.ReLU(),
+            nn.Linear(512, self.output_dim)
+        )
 
-#     def forward(self, state):
-#         features = self.conv(state)
-#         features = features.view(features.size(0), -1)
-#         values = self.value_stream(features)
-#         advantages = self.advantage_stream(features)
-#         qvals = values + (advantages - advantages.mean())
+    def forward(self, state):
+        features = self.conv(state)
+        features = features.view(features.size(0), -1)
+        values = self.value_stream(features)
+        advantages = self.advantage_stream(features)
+        qvals = values + (advantages - advantages.mean())
 
-#         return qvals
+        return qvals
 
-    # def feature_size(self):
-    #     return self.conv(torch.autograd.Variable(torch.zeros([self.input_dim[2], self.input_dim[0], self.input_dim[1]]))).view(1, -1).size(1)
+    def feature_size(self):
+        return self.conv(torch.autograd.Variable(torch.zeros([self.input_dim[2], self.input_dim[0], self.input_dim[1]]))).view(1, -1).size(1)
 
 # class Dueling_DQN(nn.Module):
 
