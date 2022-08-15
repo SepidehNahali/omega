@@ -170,6 +170,11 @@ class Env(ABC):
         """
         if action is None:
             raise NotImplementedError("The step function has not defined yet")
+    def update_resources(self):
+        for j_idx in range(len(self.jobqueue)):
+            gpus = self.jobqueue[j_idx].gpus
+            if gpus:
+                self.resources[gpus] = j_idx
 
     def observe_raw_data(self):
         """Returns information of the environment in the designed format
