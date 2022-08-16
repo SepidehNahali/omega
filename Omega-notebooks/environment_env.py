@@ -363,7 +363,7 @@ class Env(ABC):
 
 
 
-        print('resources: ',self.resources)
+        # print('resources: ',self.resources)
         
         return self.observe()
 
@@ -565,12 +565,12 @@ class Env(ABC):
         """
         if all(x == -1 for x in self.resources[gpus]):
             self.resources[gpus] = self.jobqueue[j_idx].job_id
-            print('job ',self.jobqueue[j_idx].job_id,' Just assigend  cordination: ',gpus )
+            # print('job ',self.jobqueue[j_idx].job_id,' Just assigend  cordination: ',gpus )
 
             self.jobqueue[j_idx].status = 'running'
             self.jobqueue[j_idx].gpus = gpus
             # for ii in range(len(self.jobqueue)):
-            #     print('Job Queue id, idx: ',self.jobqueue[ii].job_id, ii)
+            #     print('Job Queue id, idx: ',self.jobqueue[ii].job_id,self.jobqueue[j_idx])
 
             return True
         return False
@@ -610,7 +610,7 @@ class Env(ABC):
 
         else:
             # return ([], [], [], [], [])
-            print('3- random_select_k_gpus_for_job: ',j ,len(self.jobqueue),avl_gpus[0],len(avl_gpus[0]))
+            # print('3- random_select_k_gpus_for_job: ',j ,len(self.jobqueue),avl_gpus[0],len(avl_gpus[0]))
 
             return ([], [], [])
 
@@ -714,35 +714,34 @@ class Env(ABC):
             gpus = self.jobqueue[j_idx].gpus
             if gpus:
                 self.resources[gpus] = j_idx
+    def get_first_k_gpus(self, k: int, random: bool=False) -> tuple:
+        """Get random k available gpus
 
-    # def get_first_k_gpus(self, k: int, random: bool=False) -> tuple:
-    #     """Get random k available gpus
+        Parametersgit
+        ---------
+        k : int
+            The number of gpus that would like to pick up.
 
-    #     Parametersgit
-    #     ---------
-    #     k : int
-    #         The number of gpus that would like to pick up.
+        Returns
+        -------
+        gpus : tuple
+            A tuple represents the coordinates of selected gpus.git status
+        """
 
-    #     Returns
-    #     -------
-    #     gpus : tuple
-    #         A tuple represents the coordinates of selected gpus.git status
-    #     """
+        # print('This is get_random_gpus: ')
 
-    #     # print('This is get_random_gpus: ')
+        """Get random k available gpus
 
-    #     """Get random k available gpus
+        Parametersgit
+        ---------
+        k : int
+            The number of gpus that would like to pick up.
 
-    #     Parametersgit
-    #     ---------
-    #     k : int
-    #         The number of gpus that would like to pick up.
-
-    #     Returns
-    #     -------
-    #     gpus : tuple
-    #         A tuple represents the coordinates of selected gpus.git status
-    #     """
+        Returns
+        -------
+        gpus : tuple
+            A tuple represents the coordinates of selected gpus.git status
+        """
 
         def get_kth_dims(idx,zMax,xMax,yMax):#returns the Kth element dimentions in the 3-darray of self.resources
                 assert(idx<zMax*xMax*yMax)
@@ -839,39 +838,6 @@ class Env(ABC):
 
         return (x0, x1, x2)# before x0=np.where(self.resources == -1)[0][:k],...  had the first k gpus in resources marice. now it has nearest k gpus in terms of topology
 
-    def get_first_k_gpus(self, k: int, random: bool=False) -> tuple:
-        """Get random k available gpus
-
-        Parametersgit
-        ---------
-        k : int
-            The number of gpus that would like to pick up.
-
-        Returns
-        -------
-        gpus : tuple
-            A tuple represents the coordinates of selected gpus.git status
-        """
-
-        # print('This is get_random_gpus: ')
-
-        """Get random k available gpus
-
-        Parametersgit
-        ---------
-        k : int
-            The number of gpus that would like to pick up.
-
-        Returns
-        -------
-        gpus : tuple
-            A tuple represents the coordinates of selected gpus.git status
-        """
-        x0 = self.get_avl_gpus()[0][:k]
-        x1 = self.get_avl_gpus()[1][:k]
-        x2 = self.get_avl_gpus()[2][:k]
-
-        return (x0, x1, x2)# before x0=np.where(self.resources == -1)[0][:k],...  had the first k gpus in resources marice. now it has nearest k gpus in terms of topology
 
     def reward_throughput(self):
         def _log(x):
@@ -910,21 +876,19 @@ class Env(ABC):
                    
 
 
+
         for j in self.jobqueue[self.get_running_jobs()]:
             reward += j.v_m
             if len(j.gpus[0]) != j.gpu_request:
-                reward += penalty_assigned_gpus(job=j, gpus_per_rack=self.gpus_per_rack, ret_reducer=self.pa.ret_reducer) * self.pa.delay_penalty
+                reward +=  self.pa.delay_penalty/ float(j.job_len)
             # if j.stepcounter == 0:
             #     reward += j.job_len * j.gpu_request
         for j in self.jobqueue[self.get_waiting_jobs()]:
-            reward += calc_job_minbatch_speed(job=j, gpus_per_rack=self.gpus_per_rack, ret_reducer=self.pa.ret_reducer, singleormulti='single') * self.pa.hold_penalty
+            reward +=  self.pa.hold_penalty / float(j.job_len)
 
         for j in self.backlog:
-            reward += calc_job_minbatch_speed(job=j, gpus_per_rack=self.gpus_per_rack, ret_reducer=self.pa.ret_reducer, singleormulti='single') * self.pa.dismiss_penalty
-        
-        
-        reward*=(self.pa.num_racks_per_cluster*self.pa.num_machines_per_rack*self.pa.num_gpus_per_machine)-len(np.where(self.resources == -1)[0])
-#         reward = np.clip(reward, -300, 100)
+            reward +=  self.pa.dismiss_penalty/ float(j.job_len)
+#         lip(reward, -300, 100)
 
         
         return reward
